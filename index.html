@@ -329,7 +329,7 @@
                             </label>
                             <input id="input-main-model" type="text"
                                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                                placeholder="dungcsnd113/gemini-flash-3.7">
+                                placeholder="Nhập tên model...">
                         </div>
                         <div>
                             <div class="flex items-center justify-between mb-1">
@@ -345,7 +345,7 @@
                             <div id="grading-model-fields" class="hidden">
                                 <input id="input-grading-model" type="text"
                                     class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                                    placeholder="sypham98/gpt-5.6-sol">
+                                    placeholder="Nhập tên model judge...">
                             </div>
                             <div id="grading-model-disabled-note" class="text-xs text-slate-400 mt-1">
                                 Bật để dùng model khác kiểm tra lại nhận xét của AI chính.
@@ -1297,15 +1297,15 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             $('input-gist-id').value = gistId;
             $('settings-test-result').classList.add('hidden');
 
-            // Restore main model
+            // Restore main model (admin/ultra có thể đã lưu custom model vào localStorage)
             const mainModel = localStorage.getItem('medsim_main_model') || '';
-            $('input-main-model').value = mainModel || DEFAULT_MAIN_MODEL;
+            $('input-main-model').value = mainModel;
 
             // Restore grading model state
             const gradingEnabled = localStorage.getItem('medsim_grading_enabled') === 'true';
             const gradingModel   = localStorage.getItem('medsim_grading_model') || '';
             syncGradingToggleUI(gradingEnabled);
-            $('input-grading-model').value = gradingModel || (gradingEnabled ? DEFAULT_JUDGE_MODEL : '');
+            $('input-grading-model').value = gradingModel;
 
             $('modal-settings').classList.remove('hidden');
         }
@@ -1315,9 +1315,9 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         }
 
         function saveModelsFromModal() {
-            // Save main model (no Gist required)
+            // Chỉ admin/ultra mới thấy và lưu model (server vẫn dùng env vars mặc định nếu không set)
             const mainModel = $('input-main-model').value.trim();
-            localStorage.setItem('medsim_main_model', mainModel || DEFAULT_MAIN_MODEL);
+            localStorage.setItem('medsim_main_model', mainModel);
 
             // Save grading model
             const gradingEnabled = $('toggle-grading-model').checked;
@@ -1325,8 +1325,8 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             localStorage.setItem('medsim_grading_enabled', gradingEnabled ? 'true' : 'false');
             localStorage.setItem('medsim_grading_model',   gradingModel);
 
-            const mainLabel  = mainModel || DEFAULT_MAIN_MODEL;
-            const judgeLabel = gradingEnabled ? ` | Judge: ${gradingModel || DEFAULT_JUDGE_MODEL}` : '';
+            const mainLabel  = mainModel || '(model mặc định của server)';
+            const judgeLabel = gradingEnabled ? ` | Judge: ${gradingModel || '(mặc định)'}` : '';
             showToast(`✅ Model đã lưu: ${mainLabel}${judgeLabel}`, 'bg-sky-600');
         }
 
