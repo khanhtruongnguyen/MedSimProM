@@ -1076,42 +1076,46 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         }
 
         // =========================================================
-        // SAVE CURRENT CASE TO GIST (called after evaluation)
+        // SAVE CURRENT CASE TO SUPABASE
         // =========================================================
         async function saveCurrentCase() {
-            if (!hasGistSettings()) return; // silently skip if no settings
+            if (!currentSession || !currentCaseData) return;
 
             const elStatus = $('save-status');
             elStatus.textContent = '⏳ Đang lưu...';
             elStatus.className   = 'text-xs text-slate-400';
 
             try {
-                const cases = await gistRead();
                 const entry = {
-                    id:                Date.now().toString(),
-                    saved_at:          new Date().toISOString(),
-                    topic_id:          currentTopicData?.id    || 'random',
-                    topic_label:       currentTopicData?.label || '',
-                    topic_emoji:       currentTopicData?.emoji || '🎲',
-                    difficulty_id:     currentDiffData?.id     || 'medium',
-                    difficulty_label:  currentDiffData?.label  || '',
-                    difficulty_sub:    currentDiffData?.sub    || '',
-                    difficulty_badge:  currentDiffData?.badge  || '',
-                    patient:           currentCaseData,
-                    rubric:            hiddenRubric,
-                    structured_eval:   structuredEval,
-                    user_answer:       userDiagnosis,
-                    feedback:          initialEvaluation,
-                    dc_report:         doubleCheckReport,
-                    followups:         followUpHistory
+                    user_id:   currentUser.id,
+                    topic:     currentTopicData?.label  || '',
+                    difficulty: currentDiffData?.id     || 'medium',
+                    score:     structuredEval?.score     || null,
+                    case_data: {
+                        topic_id:          currentTopicData?.id    || 'random',
+                        topic_label:       currentTopicData?.label || '',
+                        topic_emoji:       currentTopicData?.emoji || '🎲',
+                        difficulty_id:     currentDiffData?.id     || 'medium',
+                        difficulty_label:  currentDiffData?.label  || '',
+                        difficulty_sub:    currentDiffData?.sub    || '',
+                        difficulty_badge:  currentDiffData?.badge  || '',
+                        patient:           currentCaseData,
+                        rubric:            hiddenRubric,
+                        structured_eval:   structuredEval,
+                        user_answer:       userDiagnosis,
+                        feedback:          initialEvaluation,
+                        dc_report:         doubleCheckReport,
+                        followups:         followUpHistory
+                    }
                 };
-                cases.unshift(entry);               // newest first
-                if (cases.length > 500) cases.splice(500); // cap at 500
-                await gistWrite(cases);
+
+                const { error } = await sbClient.from('cases').insert(entry);
+                if (error) throw error;
+
                 elStatus.textContent = '✅ Đã lưu';
                 elStatus.className   = 'text-xs text-emerald-600 font-medium';
             } catch (e) {
-                console.error('Save to Gist failed:', e);
+                console.error('Save to Supabase failed:', e);
                 elStatus.textContent = '⚠️ Lưu thất bại';
                 elStatus.className   = 'text-xs text-amber-600';
             }
@@ -1129,32 +1133,34 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             const list = $('history-list');
             list.innerHTML = '<p class="text-slate-400 text-sm p-5 text-center"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</p>';
 
-            if (!hasGistSettings()) {
-                list.innerHTML = `
-                    <div class="p-5 text-center">
-                        <i class="fas fa-cog text-2xl text-slate-300 mb-2 block"></i>
-                        <p class="text-slate-500 text-sm">Chưa cấu hình Gist.</p>
-                        <p class="text-slate-400 text-xs mt-1">Nhấn ⚙️ để nhập PAT và Gist ID.</p>
-                    </div>`;
+            if (!currentSession) {
+                list.innerHTML = '<p class="text-slate-400 text-sm p-5 text-center">Vui lòng đăng nhập để xem lịch sử.</p>';
                 return;
             }
 
             try {
-                const cases = await gistRead();
-                if (cases.length === 0) {
+                const { data: cases, error } = await sbClient
+                    .from('cases')
+                    .select('id, created_at, topic, difficulty, score, case_data')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+
+                if (error) throw error;
+
+                if (!cases || cases.length === 0) {
                     list.innerHTML = '<p class="text-slate-400 text-sm p-5 text-center">Chưa có ca nào được lưu.</p>';
                     return;
                 }
 
                 list.innerHTML = '';
-                // Header count
                 const header = document.createElement('div');
                 header.className = 'px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs text-slate-400 font-medium';
                 header.textContent = `${cases.length} ca đã lưu`;
                 list.appendChild(header);
 
-                cases.forEach((c, i) => {
-                    const date = new Date(c.saved_at).toLocaleString('vi-VN', {
+                cases.forEach(c => {
+                    const cd   = c.case_data || {};
+                    const date = new Date(c.created_at).toLocaleString('vi-VN', {
                         day: '2-digit', month: '2-digit', year: 'numeric',
                         hour: '2-digit', minute: '2-digit'
                     });
@@ -1165,29 +1171,52 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
                             <div class="flex items-start justify-between gap-2">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-1.5 mb-0.5">
-                                        <span class="text-base leading-none">${c.topic_emoji || '🎲'}</span>
-                                        <span class="font-semibold text-slate-700 text-sm truncate">${c.patient?.ten_benh_nhan || 'N/A'}</span>
-                                        <span class="text-slate-400 text-sm">${c.patient?.tuoi || '?'}t</span>
+                                        <span class="text-base leading-none">${cd.topic_emoji || '🎲'}</span>
+                                        <span class="font-semibold text-slate-700 text-sm truncate">${cd.patient?.ten_benh_nhan || 'N/A'}</span>
+                                        <span class="text-slate-400 text-sm">${cd.patient?.tuoi || '?'}t</span>
                                     </div>
-                                    <div class="text-xs text-slate-500">${c.topic_label || ''} · ${c.difficulty_label || ''}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">${date}</div>
+                                    <div class="text-xs text-slate-500">${cd.topic_label || c.topic || ''} · ${cd.difficulty_label || c.difficulty || ''}</div>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-xs text-slate-400">${date}</span>
+                                        ${c.score != null ? `<span class="text-xs font-semibold ${c.score >= 70 ? 'text-emerald-600' : c.score >= 50 ? 'text-amber-600' : 'text-red-500'}">${c.score}/100</span>` : ''}
+                                    </div>
                                 </div>
-                                <button data-idx="${i}"
-                                    class="btn-load-case shrink-0 text-sky-600 hover:text-white hover:bg-sky-500 text-xs font-medium border border-sky-200 hover:border-sky-500 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap">
-                                    Tải lại
-                                </button>
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    <button data-caseid="${c.id}"
+                                        class="btn-load-case text-sky-600 hover:text-white hover:bg-sky-500 text-xs font-medium border border-sky-200 hover:border-sky-500 px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap">
+                                        Tải lại
+                                    </button>
+                                    <button data-caseid="${c.id}"
+                                        class="btn-del-case text-red-400 hover:text-white hover:bg-red-500 text-xs border border-red-200 hover:border-red-500 px-2 py-1 rounded-lg transition-colors" title="Xóa ca này">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>`;
                     list.appendChild(card);
                 });
 
+                // Load button
                 list.querySelectorAll('.btn-load-case').forEach(btn => {
-                    btn.addEventListener('click', () => loadSavedCase(cases[parseInt(btn.dataset.idx)]));
+                    btn.addEventListener('click', () => {
+                        const c = cases.find(x => x.id == btn.dataset.caseid);
+                        if (c) loadSavedCase(c.case_data);
+                    });
+                });
+
+                // Delete button
+                list.querySelectorAll('.btn-del-case').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        if (!confirm('Xóa ca này?')) return;
+                        const { error } = await sbClient.from('cases').delete().eq('id', btn.dataset.caseid);
+                        if (!error) { btn.closest('.border-b').remove(); }
+                        else showToast('Xóa thất bại', 'bg-red-600');
+                    });
                 });
 
             } catch (e) {
                 console.error('Load history failed:', e);
-                list.innerHTML = `<p class="text-red-500 text-sm p-5 text-center"><i class="fas fa-exclamation-circle mr-1"></i>Không thể đọc Gist.<br><span class="text-xs text-slate-400">Kiểm tra PAT và Gist ID.</span></p>`;
+                list.innerHTML = `<p class="text-red-500 text-sm p-5 text-center"><i class="fas fa-exclamation-circle mr-1"></i>Không thể tải lịch sử.<br><span class="text-xs text-slate-400">${e.message}</span></p>`;
             }
         }
 
@@ -2273,6 +2302,10 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                     const modelSection = document.querySelector('#modal-settings .px-6.py-4.space-y-5 > div:first-child');
                     if (modelSection) modelSection.classList.add('hidden');
                 }
+
+                // Ẩn phần Gist Settings — không cần nữa, dùng Supabase
+                const gistSection = document.getElementById('settings-gist-section');
+                if (gistSection) gistSection.classList.add('hidden');
 
             } catch (e) {
                 console.error('Failed to load profile:', e);
