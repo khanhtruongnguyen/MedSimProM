@@ -107,6 +107,18 @@ exports.handler = async (event) => {
     });
     if (!r.ok) {
       const t = await r.text();
+
+      // Model không tồn tại trên provider → lỗi cấu hình, cần admin sửa env var
+      if (t.includes('not_found_error') || t.includes('"model"')) {
+        console.error(`AI model unavailable: "${model}" — ${t}`);
+        return {
+          statusCode: 500, headers,
+          body: JSON.stringify({
+            error: 'Model AI đang không khả dụng trên hệ thống. Admin vui lòng cập nhật cấu hình model.'
+          })
+        };
+      }
+
       return { statusCode: r.status, headers, body: JSON.stringify({ error: `AI error: ${t}` }) };
     }
     aiData = await r.json();
