@@ -88,6 +88,15 @@ exports.handler = async (event) => {
     model = modelType === 'judge' ? AI_JUDGE_MODEL : AI_MAIN_MODEL;
   }
 
+  // Model phải được cấu hình ở server — không bao giờ để client biết tên
+  if (!model || !model.trim()) {
+    console.error(`Missing env var: ${modelType === 'judge' ? 'AI_JUDGE_MODEL' : 'AI_MAIN_MODEL'}`);
+    return {
+      statusCode: 500, headers,
+      body: JSON.stringify({ error: 'Hệ thống chưa cấu hình model AI. Liên hệ admin.' })
+    };
+  }
+
   // ── 6. Gọi AI API ────────────────────────────────────────────────
   let aiData;
   try {
