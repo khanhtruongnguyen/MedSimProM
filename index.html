@@ -2341,35 +2341,184 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                 }
                 list.innerHTML = '';
                 users.forEach(u => {
+                    const isAdmin = u.role === 'admin';
                     const div = document.createElement('div');
-                    div.className = 'flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-white';
+                    div.className = 'border border-slate-200 rounded-lg bg-white overflow-hidden';
                     div.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
-                                <i class="fas fa-user text-xs"></i>
-                            </div>
-                            <div>
-                                <p class="font-medium text-slate-800 text-sm">${u.username}</p>
-                                <div class="flex items-center gap-1.5 mt-0.5">
-                                    <span class="text-xs px-1.5 py-0.5 rounded font-medium ${ROLE_COLORS[u.role] || 'bg-slate-100 text-slate-600'}">${ROLE_LABELS[u.role] || u.role}</span>
-                                    <span class="text-xs text-slate-400">${u.daily_limit} lượt/ngày</span>
-                                    ${!u.is_active ? '<span class="text-xs text-red-500 font-medium">• Đã tắt</span>' : ''}
+                        <div class="flex items-center justify-between p-3 gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold ${ROLE_COLORS[u.role] || 'bg-slate-100 text-slate-600'}">
+                                    ${(u.username || '?')[0].toUpperCase()}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-semibold text-slate-800 text-sm">${u.username}</span>
+                                        <span class="text-xs px-1.5 py-0.5 rounded font-medium ${ROLE_COLORS[u.role] || 'bg-slate-100 text-slate-600'}">${ROLE_LABELS[u.role] || u.role}</span>
+                                        ${!u.is_active ? '<span class="text-xs text-red-500 font-medium">• Đã tắt</span>' : ''}
+                                    </div>
+                                    <div class="text-xs text-slate-400 truncate mt-0.5">
+                                        <i class="fas fa-envelope mr-1"></i>${u.email || 'N/A'}
+                                        <span class="ml-2"><i class="fas fa-fire mr-1"></i>${u.daily_limit} lượt/ngày</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            ${u.role !== 'admin' ? `
-                            <button onclick="toggleUserActive('${u.id}', ${!u.is_active})"
-                                class="text-xs px-2.5 py-1.5 rounded-md font-medium transition-colors ${u.is_active
-                                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}">
-                                ${u.is_active ? '<i class="fas fa-ban mr-1"></i>Tắt' : '<i class="fas fa-check mr-1"></i>Bật'}
-                            </button>` : '<span class="text-xs text-slate-400">Admin</span>'}
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                ${!isAdmin ? `
+                                <button onclick="openEditUser('${u.id}','${u.username}','${u.role}',${u.daily_limit})"
+                                    class="text-xs px-2 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors" title="Sửa thông tin">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button onclick="openChangePassword('${u.id}','${u.username}')"
+                                    class="text-xs px-2 py-1.5 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-600 font-medium transition-colors" title="Đổi mật khẩu">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                                <button onclick="toggleUserActive('${u.id}', ${!u.is_active})"
+                                    class="text-xs px-2 py-1.5 rounded-md font-medium transition-colors ${u.is_active ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}" title="${u.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'}">
+                                    <i class="fas ${u.is_active ? 'fa-ban' : 'fa-check'}"></i>
+                                </button>
+                                <button onclick="confirmDeleteUser('${u.id}','${u.username}')"
+                                    class="text-xs px-2 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-600 font-medium transition-colors" title="Xóa tài khoản">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                ` : '<span class="text-xs text-slate-400 px-2">Admin</span>'}
+                            </div>
                         </div>`;
                     list.appendChild(div);
                 });
             } catch (e) {
                 list.innerHTML = `<p class="text-center text-red-500 py-4 text-sm">${e.message}</p>`;
+            }
+        }
+
+        // ── Edit user popup ──────────────────────────────────────────
+        function openEditUser(id, username, role, daily_limit) {
+            const html = `
+                <div id="popup-edit" class="fixed inset-0 overlay z-[60] flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-xs p-6 space-y-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-pencil-alt text-sky-500"></i> Sửa tài khoản</h3>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Tên hiển thị</label>
+                            <input id="edit-username" type="text" value="${username}"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Gói</label>
+                                <select id="edit-role" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500">
+                                    <option value="free" ${role==='free'?'selected':''}>Free</option>
+                                    <option value="vip" ${role==='vip'?'selected':''}>VIP</option>
+                                    <option value="pro" ${role==='pro'?'selected':''}>Pro</option>
+                                    <option value="ultra" ${role==='ultra'?'selected':''}>Ultra</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Lượt/ngày</label>
+                                <input id="edit-limit" type="number" min="1" value="${daily_limit}"
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500">
+                            </div>
+                        </div>
+                        <div id="edit-result" class="hidden text-xs p-2 rounded-lg"></div>
+                        <div class="flex gap-2">
+                            <button onclick="document.getElementById('popup-edit').remove()"
+                                class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">Huỷ</button>
+                            <button onclick="saveEditUser('${id}')"
+                                class="flex-1 px-3 py-2 text-sm bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium">Lưu</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        async function saveEditUser(targetUserId) {
+            const username    = $('edit-username').value.trim();
+            const role        = $('edit-role').value;
+            const daily_limit = parseInt($('edit-limit').value);
+            const resultEl    = $('edit-result');
+            try {
+                await adminFetch('update_user', { targetUserId, username, role, daily_limit });
+                document.getElementById('popup-edit').remove();
+                showToast('✅ Đã cập nhật tài khoản', 'bg-emerald-600');
+                loadAdminUsers();
+            } catch (e) {
+                resultEl.textContent = e.message;
+                resultEl.className = 'text-xs p-2 rounded-lg bg-red-50 text-red-600';
+                resultEl.classList.remove('hidden');
+            }
+        }
+
+        // ── Change password popup ────────────────────────────────────
+        function openChangePassword(id, username) {
+            const html = `
+                <div id="popup-pass" class="fixed inset-0 overlay z-[60] flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-xs p-6 space-y-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-key text-sky-500"></i> Đổi mật khẩu</h3>
+                        <p class="text-xs text-slate-500">Tài khoản: <strong>${username}</strong></p>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu mới</label>
+                            <input id="new-pass-input" type="password" placeholder="Tối thiểu 6 ký tự"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <div id="pass-result" class="hidden text-xs p-2 rounded-lg"></div>
+                        <div class="flex gap-2">
+                            <button onclick="document.getElementById('popup-pass').remove()"
+                                class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">Huỷ</button>
+                            <button onclick="saveNewPassword('${id}')"
+                                class="flex-1 px-3 py-2 text-sm bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium">Lưu</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        async function saveNewPassword(targetUserId) {
+            const newPassword = $('new-pass-input').value.trim();
+            const resultEl    = $('pass-result');
+            try {
+                await adminFetch('change_password', { targetUserId, newPassword });
+                document.getElementById('popup-pass').remove();
+                showToast('✅ Đã đổi mật khẩu thành công', 'bg-emerald-600');
+            } catch (e) {
+                resultEl.textContent = e.message;
+                resultEl.className = 'text-xs p-2 rounded-lg bg-red-50 text-red-600';
+                resultEl.classList.remove('hidden');
+            }
+        }
+
+        // ── Delete user confirm ──────────────────────────────────────
+        function confirmDeleteUser(id, username) {
+            const html = `
+                <div id="popup-del" class="fixed inset-0 overlay z-[60] flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-xs p-6 space-y-4">
+                        <div class="text-center">
+                            <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-trash text-2xl text-red-500"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800">Xóa tài khoản?</h3>
+                            <p class="text-sm text-slate-500 mt-1">Tài khoản <strong>${username}</strong> sẽ bị xóa vĩnh viễn cùng toàn bộ dữ liệu. Không thể hoàn tác!</p>
+                        </div>
+                        <div id="del-result" class="hidden text-xs p-2 rounded-lg"></div>
+                        <div class="flex gap-2">
+                            <button onclick="document.getElementById('popup-del').remove()"
+                                class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">Huỷ</button>
+                            <button onclick="executeDeleteUser('${id}')"
+                                class="flex-1 px-3 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">Xóa vĩnh viễn</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        async function executeDeleteUser(targetUserId) {
+            const resultEl = $('del-result');
+            try {
+                await adminFetch('delete_user', { targetUserId });
+                document.getElementById('popup-del').remove();
+                showToast('🗑️ Đã xóa tài khoản', 'bg-red-600');
+                loadAdminUsers();
+            } catch (e) {
+                resultEl.textContent = e.message;
+                resultEl.className = 'text-xs p-2 rounded-lg bg-red-50 text-red-600';
+                resultEl.classList.remove('hidden');
             }
         }
 
