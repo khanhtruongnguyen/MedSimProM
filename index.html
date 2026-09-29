@@ -6,6 +6,7 @@
     <title>Hệ Thống Giả Lập Lâm Sàng - Clinical Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -47,14 +48,53 @@
 </head>
 <body class="text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
 
-    <!-- Navbar -->
+    <!-- ===== LOGIN OVERLAY ===== -->
+    <div id="login-overlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-8">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-stethoscope text-3xl text-sky-600"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">MedSim Pro</h1>
+                <p class="text-slate-500 text-sm mt-1">Đăng nhập để tiếp tục</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Email</label>
+                    <input id="login-email" type="email"
+                        class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                        placeholder="your@email.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu</label>
+                    <input id="login-password" type="password"
+                        class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                        placeholder="••••••••">
+                </div>
+                <div id="login-error" class="hidden text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5"></div>
+                <button id="btn-login"
+                    class="w-full bg-sky-600 hover:bg-sky-700 active:scale-95 text-white py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2">
+                    <span id="login-text"><i class="fas fa-sign-in-alt mr-1"></i> Đăng nhập</span>
+                    <div id="login-spinner" class="spinner hidden"></div>
+                </button>
+            </div>
+            <p class="text-center text-xs text-slate-400 mt-5">Liên hệ admin để được cấp tài khoản</p>
+        </div>
+    </div>
+
+
     <nav class="bg-slate-900 text-white px-5 py-3.5 shadow-md flex justify-between items-center z-10">
         <div class="flex items-center space-x-3">
             <i class="fas fa-notes-medical text-sky-400 text-xl"></i>
             <h1 class="text-lg font-bold tracking-wide">MedSim <span class="font-normal text-sky-300">Pro</span></h1>
         </div>
         <div class="text-sm text-slate-300 flex items-center gap-2">
-            <span class="hidden sm:inline text-slate-400"><i class="fas fa-user-md mr-1"></i> Bác sĩ nội trú ảo</span>
+            <!-- User info (hiện sau khi đăng nhập) -->
+            <div id="nav-user-info" class="hidden items-center gap-2">
+                <span id="nav-usage" class="text-xs text-slate-400 hidden sm:inline"></span>
+                <span id="nav-username" class="text-xs font-medium bg-slate-700 px-2 py-1 rounded-md"></span>
+                <span id="nav-role-badge" class="text-xs font-bold px-2 py-0.5 rounded-full"></span>
+            </div>
             <button id="btn-new-case-nav" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-md font-medium transition-colors flex items-center text-sm shadow-sm">
                 <i class="fas fa-redo mr-1.5"></i> Ca Mới
             </button>
@@ -64,10 +104,19 @@
             <button id="btn-open-lab-ref" class="bg-teal-700 hover:bg-teal-600 text-teal-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center text-sm" title="Tra cứu chỉ số cận lâm sàng">
                 <i class="fas fa-flask mr-1.5"></i> Tra cứu CLS
             </button>
-            <button id="btn-open-settings" class="bg-slate-700 hover:bg-slate-600 text-slate-200 w-8 h-8 rounded-md flex items-center justify-center transition-colors" title="Cài đặt Gist">
+            <!-- Admin button (chỉ hiện cho admin) -->
+            <button id="btn-open-admin" class="hidden bg-amber-600 hover:bg-amber-500 text-white w-8 h-8 rounded-md flex items-center justify-center transition-colors" title="Quản lý người dùng">
+                <i class="fas fa-users-cog"></i>
+            </button>
+            <button id="btn-open-settings" class="bg-slate-700 hover:bg-slate-600 text-slate-200 w-8 h-8 rounded-md flex items-center justify-center transition-colors" title="Cài đặt">
                 <i class="fas fa-cog"></i>
             </button>
+            <!-- Logout button -->
+            <button id="btn-logout" class="hidden bg-slate-700 hover:bg-red-700 text-slate-300 hover:text-white w-8 h-8 rounded-md flex items-center justify-center transition-colors" title="Đăng xuất">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
+
     </nav>
 
     <!-- Main -->
@@ -424,7 +473,98 @@
         <div id="lab-ref-backdrop" class="flex-1"></div>
     </div>
 
+    <!-- ===== ADMIN PANEL MODAL ===== -->
+    <div id="modal-admin" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-amber-50">
+                <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-users-cog text-amber-500"></i> Quản lý tài khoản
+                </h2>
+                <button id="btn-close-admin" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-100 px-6 pt-3 gap-4">
+                <button class="admin-tab-btn active-tab pb-2 text-sm font-medium text-sky-600 border-b-2 border-sky-600" data-tab="tab-users">
+                    <i class="fas fa-list mr-1"></i> Danh sách
+                </button>
+                <button class="admin-tab-btn pb-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" data-tab="tab-create">
+                    <i class="fas fa-user-plus mr-1"></i> Tạo tài khoản
+                </button>
+                <button class="admin-tab-btn pb-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" data-tab="tab-models">
+                    <i class="fas fa-robot mr-1"></i> Mô hình AI
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto p-6">
+
+                <!-- Tab: Danh sách user -->
+                <div id="tab-users" class="admin-tab">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-xs text-slate-500">Nhấn <strong>Tải lại</strong> để cập nhật danh sách.</p>
+                        <button id="btn-reload-users" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-md font-medium transition-colors">
+                            <i class="fas fa-sync-alt mr-1"></i> Tải lại
+                        </button>
+                    </div>
+                    <div id="admin-user-list" class="space-y-2 text-sm">
+                        <p class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</p>
+                    </div>
+                </div>
+
+                <!-- Tab: Tạo tài khoản -->
+                <div id="tab-create" class="admin-tab hidden">
+                    <div class="space-y-4 max-w-sm">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Tên hiển thị <span class="text-red-500">*</span></label>
+                            <input id="new-username" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="VD: bsnguyenvan">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Email <span class="text-red-500">*</span></label>
+                            <input id="new-email" type="email" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="email@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu <span class="text-red-500">*</span></label>
+                            <input id="new-password" type="password" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="Tối thiểu 6 ký tự">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Gói tài khoản</label>
+                                <select id="new-role" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                    <option value="free">Free</option>
+                                    <option value="vip">VIP</option>
+                                    <option value="pro">Pro</option>
+                                    <option value="ultra">Ultra</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Lượt/ngày</label>
+                                <input id="new-limit" type="number" min="1" value="5"
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                        </div>
+                        <div id="create-user-result" class="hidden text-xs p-2.5 rounded-lg"></div>
+                        <button id="btn-create-user"
+                            class="w-full bg-sky-600 hover:bg-sky-700 text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-user-plus"></i> Tạo tài khoản
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab: Mô hình AI -->
+                <div id="tab-models" class="admin-tab hidden">
+                    <div id="models-info" class="space-y-3">
+                        <p class="text-center text-slate-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
+
     <div id="toast" class="fixed bottom-4 right-4 bg-red-600 text-white px-5 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
         <i class="fas fa-exclamation-triangle"></i>
         <span id="toast-message">Đã có lỗi xảy ra!</span>
@@ -432,17 +572,16 @@
 
     <script>
         // =========================================================
-        // API Configuration
+        // SUPABASE CONFIG (anon key - an toàn để public)
         // =========================================================
-        const API_KEY             = "sk-6e5bd68e2310d13bcf3747838f1cf8138d68e14e318e4e7e68cfb62a30aff59b";
-        const API_BASE_URL        = "https://api.xah.io/v1";
-        const DEFAULT_MAIN_MODEL  = "dungcsnd113/gemini-flash-3.7";
-        const DEFAULT_JUDGE_MODEL = "sypham98/gpt-5.6-sol";
+        const SUPABASE_URL      = 'https://dpmynrjlmmpjujmpwzdp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbXlucmpsbW1wanVqbXB3emRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2OTQ0NDYsImV4cCI6MjEwNjI3MDQ0Nn0.pLhK0K0apIPqMovGDiIOERvZQvDDPEJav-yK0Z-ZU2w';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Read current active model from localStorage (with fallback to default)
-        function getMainModel() {
-            return (localStorage.getItem('medsim_main_model') || '').trim() || DEFAULT_MAIN_MODEL;
-        }
+        // Auth state
+        let currentUser    = null;
+        let currentProfile = null;
+        let currentSession = null;
 
         // =========================================================
         // PROMPT TEMPLATES
@@ -834,28 +973,50 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             }
         }
 
-        function apiCall(messages, extra = {}) {
-            return fetchWithRetry(`${API_BASE_URL}/chat/completions`, {
+        // ── Gọi AI qua Netlify Function (giấu key) ──────────────────
+        async function apiCall(messages, extra = {}, modelType = 'main') {
+            if (!currentSession) throw new Error('Chưa đăng nhập');
+            const data = await fetchWithRetry('/api/ai-call', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
-                body: JSON.stringify({ model: getMainModel(), messages, ...extra })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession.access_token}`
+                },
+                body: JSON.stringify({ messages, modelType, extra })
             });
+            updateUsageDisplay(data._usage);
+            return data;
         }
 
         function getGradingModel() {
+            // Judge model được quyết định server-side theo role
+            // Chỉ trả về true/false để UI biết có bật judge hay không
             const enabled = localStorage.getItem('medsim_grading_enabled') === 'true';
-            if (!enabled) return null;
-            const saved = (localStorage.getItem('medsim_grading_model') || '').trim();
-            return saved || DEFAULT_JUDGE_MODEL;
+            return enabled ? 'judge' : null;
         }
 
-        function apiCallGrading(messages, extra = {}) {
-            const model = getGradingModel() || getMainModel();
-            return fetchWithRetry(`${API_BASE_URL}/chat/completions`, {
+        async function apiCallGrading(messages, extra = {}) {
+            if (!currentSession) throw new Error('Chưa đăng nhập');
+            const data = await fetchWithRetry('/api/ai-call', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
-                body: JSON.stringify({ model, messages, ...extra })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession.access_token}`
+                },
+                body: JSON.stringify({ messages, modelType: 'judge', extra })
             });
+            updateUsageDisplay(data._usage);
+            return data;
+        }
+
+        // Cập nhật usage counter trên navbar sau mỗi lần gọi AI
+        function updateUsageDisplay(usageData) {
+            if (!usageData) return;
+            const el = $('nav-usage');
+            if (el) {
+                el.textContent = `${usageData.used}/${usageData.limit} lượt hôm nay`;
+                el.classList.remove('hidden');
+            }
         }
 
         function getResponseText(data) {
@@ -2006,25 +2167,330 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         });
 
         // =========================================================
+        // AUTH — Login / Logout
+        // =========================================================
+        async function handleLogin() {
+            const email    = $('login-email').value.trim();
+            const password = $('login-password').value.trim();
+            const errEl    = $('login-error');
+            errEl.classList.add('hidden');
+
+            if (!email || !password) {
+                errEl.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            $('login-text').innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang đăng nhập...';
+            $('login-spinner').classList.remove('hidden');
+            $('btn-login').disabled = true;
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                // onAuthStateChange sẽ xử lý phần còn lại
+            } catch (e) {
+                errEl.textContent = e.message === 'Invalid login credentials'
+                    ? 'Email hoặc mật khẩu không đúng.'
+                    : `Lỗi: ${e.message}`;
+                errEl.classList.remove('hidden');
+                $('login-text').innerHTML = '<i class="fas fa-sign-in-alt mr-1"></i> Đăng nhập';
+                $('login-spinner').classList.add('hidden');
+                $('btn-login').disabled = false;
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            currentProfile = null;
+            currentSession = null;
+            $('login-overlay').classList.remove('hidden');
+            $('login-overlay').classList.add('flex');
+            $('nav-user-info').classList.add('hidden');
+            $('btn-logout').classList.add('hidden');
+            $('btn-open-admin').classList.add('hidden');
+            $('login-email').value = '';
+            $('login-password').value = '';
+        }
+
+        async function onUserLoggedIn(session) {
+            currentSession = session;
+            currentUser    = session.user;
+
+            // Buscar profile
+            try {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (error || !profile) throw new Error('Profile not found');
+                if (!profile.is_active) {
+                    await supabase.auth.signOut();
+                    const errEl = $('login-error');
+                    errEl.textContent = 'Tài khoản đã bị vô hiệu hóa. Liên hệ admin.';
+                    errEl.classList.remove('hidden');
+                    $('login-text').innerHTML = '<i class="fas fa-sign-in-alt mr-1"></i> Đăng nhập';
+                    $('btn-login').disabled = false;
+                    return;
+                }
+
+                currentProfile = profile;
+
+                // Ẩn login overlay
+                $('login-overlay').classList.add('hidden');
+
+                // Hiện user info trên nav
+                const navInfo = $('nav-user-info');
+                navInfo.classList.remove('hidden');
+                navInfo.classList.add('flex');
+                $('nav-username').textContent = profile.username;
+                $('btn-logout').classList.remove('hidden');
+                $('btn-logout').classList.add('flex');
+
+                // Role badge
+                const roleBadge = $('nav-role-badge');
+                const roleColors = {
+                    admin: 'bg-red-500 text-white',
+                    ultra: 'bg-purple-500 text-white',
+                    pro:   'bg-sky-500 text-white',
+                    vip:   'bg-amber-500 text-white',
+                    free:  'bg-slate-400 text-white'
+                };
+                roleBadge.textContent  = profile.role.toUpperCase();
+                roleBadge.className    = `text-xs font-bold px-2 py-0.5 rounded-full ${roleColors[profile.role] || 'bg-slate-400 text-white'}`;
+
+                // Admin button
+                if (profile.role === 'admin') {
+                    $('btn-open-admin').classList.remove('hidden');
+                    $('btn-open-admin').classList.add('flex');
+                }
+
+                // Ẩn model settings với free/vip/pro
+                if (!['admin', 'ultra'].includes(profile.role)) {
+                    const modelSection = document.querySelector('#modal-settings .px-6.py-4.space-y-5 > div:first-child');
+                    if (modelSection) modelSection.classList.add('hidden');
+                }
+
+            } catch (e) {
+                console.error('Failed to load profile:', e);
+                showToast('Lỗi tải thông tin tài khoản. Vui lòng thử lại.', 'bg-red-600');
+            }
+        }
+
+        // Listen for auth state changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                onUserLoggedIn(session);
+            } else if (event === 'SIGNED_OUT') {
+                $('login-overlay').classList.remove('hidden');
+            } else if (event === 'TOKEN_REFRESHED' && session) {
+                currentSession = session;
+            }
+        });
+
+        $('btn-login').addEventListener('click', handleLogin);
+        $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+        $('btn-logout').addEventListener('click', handleLogout);
+
+        // =========================================================
+        // ADMIN PANEL
+        // =========================================================
+        const ROLE_LABELS = { free: 'Free', vip: 'VIP', pro: 'Pro', ultra: 'Ultra', admin: 'Admin' };
+        const ROLE_COLORS = {
+            admin: 'bg-red-100 text-red-700',
+            ultra: 'bg-purple-100 text-purple-700',
+            pro:   'bg-sky-100 text-sky-700',
+            vip:   'bg-amber-100 text-amber-700',
+            free:  'bg-slate-100 text-slate-600'
+        };
+
+        function openAdminPanel() {
+            $('modal-admin').classList.remove('hidden');
+            loadAdminUsers();
+        }
+
+        function closeAdminPanel() {
+            $('modal-admin').classList.add('hidden');
+        }
+
+        async function adminFetch(action, extra = {}) {
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession.access_token}`
+                },
+                body: JSON.stringify({ action, ...extra })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Lỗi server');
+            return data;
+        }
+
+        async function loadAdminUsers() {
+            const list = $('admin-user-list');
+            list.innerHTML = '<p class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</p>';
+            try {
+                const { users } = await adminFetch('list_users');
+                if (!users || users.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-400 py-8">Không có user nào.</p>';
+                    return;
+                }
+                list.innerHTML = '';
+                users.forEach(u => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-white';
+                    div.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+                                <i class="fas fa-user text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-slate-800 text-sm">${u.username}</p>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span class="text-xs px-1.5 py-0.5 rounded font-medium ${ROLE_COLORS[u.role] || 'bg-slate-100 text-slate-600'}">${ROLE_LABELS[u.role] || u.role}</span>
+                                    <span class="text-xs text-slate-400">${u.daily_limit} lượt/ngày</span>
+                                    ${!u.is_active ? '<span class="text-xs text-red-500 font-medium">• Đã tắt</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${u.role !== 'admin' ? `
+                            <button onclick="toggleUserActive('${u.id}', ${!u.is_active})"
+                                class="text-xs px-2.5 py-1.5 rounded-md font-medium transition-colors ${u.is_active
+                                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}">
+                                ${u.is_active ? '<i class="fas fa-ban mr-1"></i>Tắt' : '<i class="fas fa-check mr-1"></i>Bật'}
+                            </button>` : '<span class="text-xs text-slate-400">Admin</span>'}
+                        </div>`;
+                    list.appendChild(div);
+                });
+            } catch (e) {
+                list.innerHTML = `<p class="text-center text-red-500 py-4 text-sm">${e.message}</p>`;
+            }
+        }
+
+        async function toggleUserActive(userId, newStatus) {
+            try {
+                await adminFetch('toggle_user', { targetUserId: userId, is_active: newStatus });
+                showToast(newStatus ? '✅ Đã bật tài khoản' : '🚫 Đã vô hiệu hóa tài khoản', 'bg-emerald-600');
+                loadAdminUsers();
+            } catch (e) {
+                showToast(`Lỗi: ${e.message}`, 'bg-red-600');
+            }
+        }
+
+        async function handleCreateUser() {
+            const username    = $('new-username').value.trim();
+            const email       = $('new-email').value.trim();
+            const password    = $('new-password').value.trim();
+            const role        = $('new-role').value;
+            const daily_limit = parseInt($('new-limit').value) || 5;
+            const resultEl    = $('create-user-result');
+
+            resultEl.classList.add('hidden');
+            if (!username || !email || !password) {
+                resultEl.textContent = 'Vui lòng điền đầy đủ thông tin.';
+                resultEl.className = 'text-xs p-2.5 rounded-lg bg-red-50 text-red-600 border border-red-200';
+                resultEl.classList.remove('hidden');
+                return;
+            }
+
+            $('btn-create-user').disabled = true;
+            $('btn-create-user').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang tạo...';
+
+            try {
+                await adminFetch('create_user', { username, email, password, role, daily_limit });
+                resultEl.textContent = `✅ Tạo tài khoản "${username}" thành công!`;
+                resultEl.className = 'text-xs p-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200';
+                resultEl.classList.remove('hidden');
+                $('new-username').value = '';
+                $('new-email').value    = '';
+                $('new-password').value = '';
+            } catch (e) {
+                resultEl.textContent = `❌ ${e.message}`;
+                resultEl.className = 'text-xs p-2.5 rounded-lg bg-red-50 text-red-600 border border-red-200';
+                resultEl.classList.remove('hidden');
+            } finally {
+                $('btn-create-user').disabled = false;
+                $('btn-create-user').innerHTML = '<i class="fas fa-user-plus mr-1"></i> Tạo tài khoản';
+            }
+        }
+
+        async function loadModelsInfo() {
+            const el = $('models-info');
+            el.innerHTML = '<p class="text-center text-slate-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</p>';
+            try {
+                const { mainModel, judgeModel } = await adminFetch('get_models');
+                el.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="p-3 bg-sky-50 border border-sky-200 rounded-lg">
+                            <p class="text-xs font-semibold text-sky-600 uppercase tracking-wide mb-1">🧠 Model Chính</p>
+                            <p class="font-mono text-sm text-slate-800">${mainModel}</p>
+                            <p class="text-xs text-slate-400 mt-1">Dùng để tạo ca bệnh, chấm điểm, trả lời follow-up</p>
+                        </div>
+                        <div class="p-3 bg-violet-50 border border-violet-200 rounded-lg">
+                            <p class="text-xs font-semibold text-violet-600 uppercase tracking-wide mb-1">⚖️ Model Judge (Double Check)</p>
+                            <p class="font-mono text-sm text-slate-800">${judgeModel}</p>
+                            <p class="text-xs text-slate-400 mt-1">Dùng để kiểm tra lại nhận xét của model chính</p>
+                        </div>
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Để thay đổi model, vào <strong>Netlify → Environment Variables</strong> và cập nhật
+                            <code class="bg-amber-100 px-1 rounded">AI_MAIN_MODEL</code> /
+                            <code class="bg-amber-100 px-1 rounded">AI_JUDGE_MODEL</code>.
+                        </div>
+                    </div>`;
+            } catch (e) {
+                el.innerHTML = `<p class="text-center text-red-500 py-4 text-sm">${e.message}</p>`;
+            }
+        }
+
+        // Admin panel tab switching
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+                document.querySelectorAll('.admin-tab-btn').forEach(b => {
+                    b.classList.remove('text-sky-600', 'border-sky-600');
+                    b.classList.add('text-slate-500', 'border-transparent');
+                });
+                btn.classList.add('text-sky-600', 'border-sky-600');
+                btn.classList.remove('text-slate-500', 'border-transparent');
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+                $(targetTab).classList.remove('hidden');
+                if (targetTab === 'tab-models') loadModelsInfo();
+            });
+        });
+
+        $('btn-open-admin').addEventListener('click', openAdminPanel);
+        $('btn-close-admin').addEventListener('click', closeAdminPanel);
+        $('btn-reload-users').addEventListener('click', loadAdminUsers);
+        $('btn-create-user').addEventListener('click', handleCreateUser);
+        $('modal-admin').addEventListener('click', e => { if (e.target === $('modal-admin')) closeAdminPanel(); });
+
+        // =========================================================
         // INIT
         // =========================================================
         marked.setOptions({ breaks: true, gfm: true });
         renderTopics();
         renderDifficulties();
 
-        // Show indicator if Gist is configured
-        if (hasGistSettings()) {
-            const indicator = document.createElement('span');
-            indicator.className = 'w-2 h-2 bg-emerald-400 rounded-full inline-block';
-            indicator.title = 'Gist đã cấu hình';
-            $('btn-open-settings').appendChild(indicator);
-        }
+        // Kiểm tra session đang có (tự động đăng nhập nếu còn session)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                onUserLoggedIn(session);
+            }
+            // Nếu không có session, login overlay đã hiển thị mặc định
+        });
 
-        // Show violet dot if Grading Model is active
+        // Show violet dot nếu Judge model đang bật
         if (getGradingModel()) {
             const gIndicator = document.createElement('span');
             gIndicator.className = 'w-2 h-2 bg-violet-400 rounded-full inline-block';
-            gIndicator.title = `Judge model: ${getGradingModel()}`;
+            gIndicator.title = 'Judge model đang bật';
             $('btn-open-settings').appendChild(gIndicator);
         }
     </script>
