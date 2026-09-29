@@ -1799,7 +1799,7 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                 pair.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
                 // Update save with new follow-up (non-blocking)
-                if (hasGistSettings()) saveCurrentCase();
+                if (currentSession) saveCurrentCase();
 
             } catch (e) {
                 console.error('Follow-up error:', e);
