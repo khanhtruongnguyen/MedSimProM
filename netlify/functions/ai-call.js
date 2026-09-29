@@ -98,6 +98,9 @@ exports.handler = async (event) => {
   }
 
   // ── 6. Gọi AI API ────────────────────────────────────────────────
+  // Log mỗi request để đối chiếu env var thật đang chạy với giá trị đã cấu hình
+  console.log(`[ai-call] model="${model}" type=${modelType} role=${profile.role}`);
+
   let aiData;
   try {
     const r = await fetch(`${AI_API_BASE_URL}/chat/completions`, {
