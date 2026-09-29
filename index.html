@@ -2157,14 +2157,14 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         $('btn-cancel-settings').addEventListener('click', closeSettings);
         $('btn-save-models').addEventListener('click', saveModelsFromModal);
         // btn-save-settings, btn-test-connection, btn-create-gist removed (Gist section deleted)
-        $('toggle-grading-model').addEventListener('change', e => syncGradingToggleUI(e.target.checked));
+        $('toggle-grading-model')?.addEventListener('change', e => syncGradingToggleUI(e.target.checked));
 
         // Sync toggle-judge-status (always-visible) with toggle-grading-model (admin section)
-        $('toggle-judge-status').addEventListener('change', e => {
-            $('toggle-grading-model').checked = e.target.checked;
+        $('toggle-judge-status')?.addEventListener('change', e => {
+            if ($('toggle-grading-model')) $('toggle-grading-model').checked = e.target.checked;
             syncGradingToggleUI(e.target.checked);
             localStorage.setItem('medsim_grading_enabled', e.target.checked ? 'true' : 'false');
-            $('judge-status-label').textContent = e.target.checked ? 'Bật' : 'Tắt';
+            if ($('judge-status-label')) $('judge-status-label').textContent = e.target.checked ? 'Bật' : 'Tắt';
         });
         $('modal-settings').addEventListener('click', e => {
             if (e.target === $('modal-settings')) closeSettings();
