@@ -89,6 +89,11 @@
             <h1 class="text-lg font-bold tracking-wide">MedSim <span class="font-normal text-sky-300">Pro</span></h1>
         </div>
         <div class="text-sm text-slate-300 flex items-center gap-2">
+            <!-- Case timer (bấm giờ mỗi khi ca bệnh bắt đầu) -->
+            <div id="case-timer" class="hidden items-center gap-1.5 text-xs font-mono font-bold bg-slate-800 text-emerald-400 border border-slate-700 px-2.5 py-1.5 rounded-md" title="Thời gian từ lúc ca bệnh bắt đầu">
+                <i class="fas fa-stopwatch text-emerald-500"></i>
+                <span id="case-timer-value">00:00</span>
+            </div>
             <!-- User info (hiện sau khi đăng nhập) -->
             <div id="nav-user-info" class="hidden items-center gap-2">
                 <span id="nav-usage" class="text-xs text-slate-400 hidden sm:inline"></span>
@@ -588,6 +593,45 @@
 
     <script>
         // =========================================================
+        // TỰ CHỐNG NHÌN MÃ NGUỒN (rào cản tâm lý — không phải bảo mật thật)
+        // =========================================================
+        (function antiViewSource() {
+            // 1. Chặn chuột phải
+            document.addEventListener('contextmenu', e => {
+                if (e.target.closest('input, textarea, [contenteditable]')) return;
+                e.preventDefault();
+            });
+
+            // 2. Chặn phím tắt xem nguồn / DevTools
+            document.addEventListener('keydown', e => {
+                const k = (e.key || '').toLowerCase();
+                const blocked =
+                    (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(k)) ||
+                    (e.ctrlKey && k === 'u') ||
+                    (e.ctrlKey && k === 's') ||
+                    (e.ctrlKey && k === 'p') ||
+                    k === 'f12';
+                if (blocked) { e.preventDefault(); e.stopPropagation(); return false; }
+            });
+
+            // 3. Chặn click chuột giữa (mở link / xem nguồn)
+            document.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
+
+            // 4. Khi DevTools mở (cửa sổ thu nhỏ bất thường) → làm nhiễu console
+            let devtoolsOpened = false;
+            setInterval(() => {
+                const h = window.outerHeight - window.innerHeight > 160;
+                const w = window.outerWidth - window.innerWidth > 160;
+                if ((h || w) && !devtoolsOpened) {
+                    devtoolsOpened = true;
+                    console.clear();
+                    console.log('%cMedSim Pro', 'font-size:40px;font-weight:bold;color:#0ea5e9');
+                    console.log('%cCode là tài sản riêng. Đừng cố đọc.', 'font-size:14px;color:#ef4444');
+                } else if (!h && !w) devtoolsOpened = false;
+            }, 1500);
+        })();
+
+        // =========================================================
         // SUPABASE CONFIG (anon key - an toàn để public)
         // =========================================================
         const SUPABASE_URL      = 'https://dpmynrjlmmpjujmpwzdp.supabase.co';
@@ -598,6 +642,42 @@
         let currentUser    = null;
         let currentProfile = null;
         let currentSession = null;
+
+        // Case timer — bấm giờ từ lúc ca bệnh bắt đầu
+        let caseTimerInterval = null;
+        let caseTimerSeconds   = 0;
+
+        function startCaseTimer() {
+            stopCaseTimer();
+            caseTimerSeconds = 0;
+            updateCaseTimerUI();
+            $('case-timer')?.classList.remove('hidden');
+            $('case-timer')?.classList.add('flex');
+            caseTimerInterval = setInterval(() => {
+                caseTimerSeconds++;
+                updateCaseTimerUI();
+            }, 1000);
+        }
+
+        function stopCaseTimer() {
+            if (caseTimerInterval) { clearInterval(caseTimerInterval); caseTimerInterval = null; }
+        }
+
+        function resetCaseTimer() {
+            stopCaseTimer();
+            caseTimerSeconds = 0;
+            updateCaseTimerUI();
+            $('case-timer')?.classList.add('hidden');
+            $('case-timer')?.classList.remove('flex');
+        }
+
+        function updateCaseTimerUI() {
+            const el = $('case-timer-value');
+            if (!el) return;
+            const m = String(Math.floor(caseTimerSeconds / 60)).padStart(2, '0');
+            const s = String(caseTimerSeconds % 60).padStart(2, '0');
+            el.textContent = `${m}:${s}`;
+        }
 
         // =========================================================
         // PROMPT TEMPLATES
@@ -1678,6 +1758,9 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
             elWelcome.classList.add('hidden');
             elPatient.classList.remove('hidden');
             elWorkspace.classList.remove('opacity-50', 'pointer-events-none');
+
+            // Bắt đầu bấm giờ từ lúc ca bệnh hiện ra
+            startCaseTimer();
             elDoctorInput.focus();
         }
 
@@ -1690,6 +1773,8 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
             if (!currentCaseData) { showToast('Vui lòng tạo ca lâm sàng trước!'); return; }
 
             userDiagnosis = input;
+            // Dừng bấm giờ — người học đã nộp bài
+            stopCaseTimer();
             elBtnSubmit.disabled   = true;
             elDoctorInput.disabled = true;
             elEvalResult.classList.add('hidden');
@@ -1897,6 +1982,7 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         // RESET
         // =========================================================
         function resetToWelcome() {
+            resetCaseTimer();
             currentCaseData   = null;
             hiddenRubric      = null;
             structuredEval    = null;
