@@ -1310,11 +1310,6 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         }
 
         function openSettings() {
-            const { pat, gistId } = getGistSettings();
-            $('input-pat').value     = pat;
-            $('input-gist-id').value = gistId;
-            $('settings-test-result').classList.add('hidden');
-
             // Restore main model (admin/ultra có thể đã lưu custom model vào localStorage)
             const mainModel = localStorage.getItem('medsim_main_model') || '';
             $('input-main-model').value = mainModel;
@@ -2161,9 +2156,7 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         $('btn-close-settings').addEventListener('click', closeSettings);
         $('btn-cancel-settings').addEventListener('click', closeSettings);
         $('btn-save-models').addEventListener('click', saveModelsFromModal);
-        $('btn-save-settings').addEventListener('click', saveSettingsFromModal);
-        $('btn-test-connection').addEventListener('click', testGistConnection);
-        $('btn-create-gist').addEventListener('click', createGist);
+        // btn-save-settings, btn-test-connection, btn-create-gist removed (Gist section deleted)
         $('toggle-grading-model').addEventListener('change', e => syncGradingToggleUI(e.target.checked));
 
         // Sync toggle-judge-status (always-visible) with toggle-grading-model (admin section)
