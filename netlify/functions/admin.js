@@ -47,9 +47,7 @@ exports.handler = async (event) => {
   // ── 2. Kiểm tra quyền admin ──────────────────────────────────────
   const profileRes = await sb(`/rest/v1/profiles?id=eq.${userId}&select=role`);
   const profiles   = await profileRes.json();
-  if (profiles[0]?.role !== 'admin') {
-    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Chỉ admin mới có quyền này' }) };
-  }
+  const role       = profiles[0]?.role || 'free';
 
   let body;
   try { body = JSON.parse(event.body); }
@@ -58,11 +56,69 @@ exports.handler = async (event) => {
   const { action } = body;
 
   // ── ACTION: get_models ───────────────────────────────────────────
+  // Admin: xem và sửa model (cá nhân + chung)
+  // Ultra: xem và sửa model cá nhân
+  // Pro/Vip/Free: không được xem
   if (action === 'get_models') {
-    return {
-      statusCode: 200, headers,
-      body: JSON.stringify({ mainModel: AI_MAIN_MODEL, judgeModel: AI_JUDGE_MODEL })
-    };
+    if (role !== 'admin' && role !== 'ultra') {
+      return { statusCode: 403, headers, body: JSON.stringify({ error: 'Không có quyền' }) };
+    }
+    const result = { mainModel: AI_MAIN_MODEL, judgeModel: AI_JUDGE_MODEL };
+
+    // Model cá nhân (admin/ultra)
+    const ownRes = await sb(`/rest/v1/profiles?id=eq.${userId}&select=custom_main_model,custom_judge_model`);
+    const own    = (await ownRes.json())[0] || {};
+    result.customMainModel = own.custom_main_model || '';
+    result.customJudgeModel = own.custom_judge_model || '';
+
+    // Model chung Pro/Vip/Free (chỉ admin thấy)
+    if (role === 'admin') {
+      try {
+        const g = await sb(`/rest/v1/app_settings?id=eq.1&select=group_main_model,group_judge_model`);
+        const settings = (await g.json())[0] || {};
+        result.groupMainModel  = settings.group_main_model  || '';
+        result.groupJudgeModel = settings.group_judge_model || '';
+      } catch { /* non-fatal */ }
+    }
+
+    return { statusCode: 200, headers, body: JSON.stringify(result) };
+  }
+
+  // ── ACTION: set_own_model ────────────────────────────────────────
+  // Admin/ultra: lưu model cá nhân
+  if (action === 'set_own_model') {
+    if (role !== 'admin' && role !== 'ultra') {
+      return { statusCode: 403, headers, body: JSON.stringify({ error: 'Không có quyền' }) };
+    }
+    const { customMainModel, customJudgeModel } = body;
+    const update = { updated_at: new Date().toISOString() };
+    if (customMainModel !== undefined)  update.custom_main_model  = String(customMainModel).trim();
+    if (customJudgeModel !== undefined) update.custom_judge_model = String(customJudgeModel).trim();
+    await sb(`/rest/v1/profiles?id=eq.${userId}`, {
+      method: 'PATCH', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify(update)
+    });
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+  }
+
+  // ── ACTION: set_group_model ──────────────────────────────────────
+  // Admin: lưu model chung cho Pro/Vip/Free
+  if (action === 'set_group_model') {
+    if (role !== 'admin') {
+      return { statusCode: 403, headers, body: JSON.stringify({ error: 'Chỉ admin mới có quyền này' }) };
+    }
+    const { groupMainModel, groupJudgeModel } = body;
+    const update = { updated_at: new Date().toISOString() };
+    if (groupMainModel  !== undefined) update.group_main_model  = String(groupMainModel).trim();
+    if (groupJudgeModel !== undefined) update.group_judge_model = String(groupJudgeModel).trim();
+    await sb(`/rest/v1/app_settings?id=eq.1`, {
+      method: 'PATCH', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify(update)
+    });
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+  }
+
+  // Các action còn lại yêu cầu admin
+  if (role !== 'admin') {
+    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Chỉ admin mới có quyền này' }) };
   }
 
   // ── ACTION: list_users ───────────────────────────────────────────

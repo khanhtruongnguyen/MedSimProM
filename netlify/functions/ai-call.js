@@ -78,17 +78,38 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body); }
   catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid request' }) }; }
 
-  const { messages, modelType = 'main', extra = {}, customModel } = body;
+  const { messages, modelType = 'main', extra = {} } = body;
+  // KHÔNG nhận customModel từ client — model luôn do server quyết định theo role
+  // (nếu nhận từ client, user tự sửa request là dùng được model bất kỳ)
 
   // ── 5. Xác định model ────────────────────────────────────────────
-  let model;
-  if ((profile.role === 'admin' || profile.role === 'ultra') && customModel) {
-    model = customModel;  // admin/ultra có thể override model
+  // Thứ tự ưu tiên:
+  //   1. admin/ultra có model cá nhân trong profiles → dùng của họ
+  //   2. pro/vip/free có model chung trong app_settings → dùng của admin đặt
+  //   3. không có gì → fallback về env var
+  const envModel = modelType === 'judge' ? AI_JUDGE_MODEL : AI_MAIN_MODEL;
+  const isElevated = profile.role === 'admin' || profile.role === 'ultra';
+
+  let model = envModel;
+  let modelSource = 'env';
+
+  if (isElevated) {
+    const own = modelType === 'judge' ? profile.custom_judge_model : profile.custom_main_model;
+    if (own && own.trim()) { model = own.trim(); modelSource = 'personal'; }
   } else {
-    model = modelType === 'judge' ? AI_JUDGE_MODEL : AI_MAIN_MODEL;
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.1&select=group_main_model,group_judge_model`, {
+        headers: { 'Authorization': `Bearer ${SUPABASE_SVC_KEY}`, 'apikey': SUPABASE_SVC_KEY }
+      });
+      if (r.ok) {
+        const s = (await r.json())[0];
+        const g = s ? (modelType === 'judge' ? s.group_judge_model : s.group_main_model) : '';
+        if (g && g.trim()) { model = g.trim(); modelSource = 'group'; }
+      }
+    } catch { /* non-fatal — fallback env */ }
   }
 
-  // Model phải được cấu hình ở server — không bao giờ để client biết tên
+  // Model phải có giá trị — nếu env var cũng trống thì mới báo lỗi
   if (!model || !model.trim()) {
     console.error(`Missing env var: ${modelType === 'judge' ? 'AI_JUDGE_MODEL' : 'AI_MAIN_MODEL'}`);
     return {
@@ -99,7 +120,7 @@ exports.handler = async (event) => {
 
   // ── 6. Gọi AI API ────────────────────────────────────────────────
   // Log mỗi request để đối chiếu env var thật đang chạy với giá trị đã cấu hình
-  console.log(`[ai-call] model="${model}" type=${modelType} role=${profile.role}`);
+  console.log(`[ai-call] model="${model}" type=${modelType} role=${profile.role} source=${modelSource}`);
 
   let aiData;
   try {

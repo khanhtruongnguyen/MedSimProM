@@ -317,45 +317,70 @@
             </div>
             <div class="px-6 py-4 space-y-5">
 
-                <!-- === MODEL SETTINGS === -->
-                <div>
+                <!-- === MODEL SETTINGS (chỉ admin/ultra mới thấy) === -->
+                <div id="settings-model-section">
                     <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
                         <i class="fas fa-robot text-sky-500"></i> Cấu hình Model AI
                     </h3>
+
+                    <!-- Ô cá nhân: admin + ultra -->
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">
-                                🧠 Model Chính <span class="text-slate-400 font-normal">(tạo ca + chấm + trả lời)</span>
+                                🧠 Model cá nhân — Chính <span class="text-slate-400 font-normal">(tạo ca + chấm + trả lời)</span>
                             </label>
                             <input id="input-main-model" type="text"
                                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                                placeholder="Nhập tên model...">
+                                placeholder="Để trống = dùng mặc định của hệ thống">
                         </div>
                         <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="text-xs font-medium text-slate-600 flex items-center gap-1">
-                                    <i class="fas fa-gavel text-violet-500"></i> Model Double Check (Judge)
-                                </label>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="toggle-grading-model" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
-                                    <span id="grading-toggle-label" class="ml-2 text-xs text-slate-500">Tắt</span>
-                                </label>
-                            </div>
-                            <div id="grading-model-fields" class="hidden">
-                                <input id="input-grading-model" type="text"
-                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                                    placeholder="Nhập tên model judge...">
-                            </div>
-                            <div id="grading-model-disabled-note" class="text-xs text-slate-400 mt-1">
-                                Bật để dùng model khác kiểm tra lại nhận xét của AI chính.
-                            </div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">
+                                <i class="fas fa-gavel text-violet-500"></i> Model cá nhân — Double Check (Judge) <span class="text-violet-600">luôn bật</span>
+                            </label>
+                            <input id="input-grading-model" type="text"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                                placeholder="Để trống = dùng mặc định của hệ thống">
                         </div>
                     </div>
                     <button id="btn-save-models"
                         class="mt-3 w-full px-4 py-2 text-sm bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors">
-                        <i class="fas fa-save mr-1"></i> Lưu cấu hình Model
+                        <i class="fas fa-save mr-1"></i> Lưu Model cá nhân
                     </button>
+                    <button id="btn-reset-models"
+                        class="mt-2 w-full px-4 py-2 text-sm border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-undo mr-1"></i> Khôi phục mặc định
+                    </button>
+
+                    <!-- Ô chung Pro/Vip/Free: chỉ admin -->
+                    <div id="settings-group-model" class="mt-5 pt-5 border-t border-slate-100">
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <i class="fas fa-users text-sky-500"></i>
+                            <h4 class="text-sm font-semibold text-slate-700">Model cho Pro / Vip / Free</h4>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-3">
+                            Tài khoản Pro, Vip, Free không có ô cấu hình — họ luôn dùng model bạn đặt ở đây.
+                        </p>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">🧠 Model Chính</label>
+                                <input id="input-group-main-model" type="text"
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                                    placeholder="Để trống = dùng mặc định của hệ thống">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">
+                                    <i class="fas fa-gavel text-violet-500"></i> Model Double Check (Judge)
+                                </label>
+                                <input id="input-group-grading-model" type="text"
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                                    placeholder="Để trống = dùng mặc định của hệ thống">
+                            </div>
+                        </div>
+                        <button id="btn-save-group-models"
+                            class="mt-3 w-full px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">
+                            <i class="fas fa-save mr-1"></i> Lưu Model cho Pro/Vip/Free
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Gist section removed — lịch sử giờ lưu vào Supabase tự động -->
@@ -371,7 +396,10 @@
                                 <p class="text-xs font-medium text-slate-700">🧠 Model Chính</p>
                                 <p class="text-xs text-slate-400 mt-0.5">Tạo ca bệnh · Chấm điểm · Trả lời</p>
                             </div>
-                            <span class="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-1 rounded-full">✓ Đang hoạt động</span>
+                            <div class="text-right">
+                                <span class="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-1 rounded-full">✓ Đang hoạt động</span>
+                                <p id="status-main-model" class="text-xs text-slate-500 mt-1 font-mono"></p>
+                            </div>
                         </div>
                         <div class="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-3">
                             <div>
@@ -380,11 +408,10 @@
                                 </p>
                                 <p class="text-xs text-slate-400 mt-0.5">Kiểm tra lại nhận xét của AI chính</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="toggle-judge-status" class="sr-only peer">
-                                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
-                                <span id="judge-status-label" class="ml-2 text-xs text-slate-500">Tắt</span>
-                            </label>
+                            <div class="text-right">
+                                <span class="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-1 rounded-full">✓ Luôn bật</span>
+                                <p id="status-judge-model" class="text-xs text-slate-500 mt-1 font-mono"></p>
+                            </div>
                         </div>
                     </div>
                     <p class="text-xs text-slate-400 mt-3 text-center">
@@ -993,10 +1020,10 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         }
 
         function getGradingModel() {
-            // Judge model được quyết định server-side theo role
-            // Chỉ trả về true/false để UI biết có bật judge hay không
-            const enabled = localStorage.getItem('medsim_grading_enabled') === 'true';
-            return enabled ? 'judge' : null;
+            // Double Check (Judge) LUÔN bật — server luôn có AI_JUDGE_MODEL.
+            // Client không biết/không cần biết tên model, chỉ trả 'judge' để
+            // UI hiện nút Double Check.
+            return 'judge';
         }
 
         async function apiCallGrading(messages, extra = {}) {
@@ -1260,19 +1287,17 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             // Lock workspace (evaluation already done)
             elWorkspace.classList.add('opacity-50', 'pointer-events-none');
 
-            // Restore Double Check state
+            // Double Check luôn bật — chỉ cần xử lý report đã có hay chưa
             elBtnDoubleCheck.classList.add('hidden');
             elBtnDoubleCheck.style.display = '';
             if (doubleCheckReport) {
                 // Report already exists — show report button directly
                 elBtnShowReport.classList.remove('hidden');
                 elBtnShowReport.style.display = 'inline-flex';
-            } else if (getGradingModel()) {
-                // No report yet but model configured — show double check button
+            } else {
+                // No report yet — show double check button (always on)
                 elBtnDoubleCheck.classList.remove('hidden');
                 elBtnDoubleCheck.style.display = 'inline-flex';
-                elBtnShowReport.classList.add('hidden');
-            } else {
                 elBtnShowReport.classList.add('hidden');
             }
 
@@ -1312,56 +1337,101 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         // =========================================================
         // SETTINGS MODAL
         // =========================================================
-        function syncGradingToggleUI(checked) {
-            $('toggle-grading-model').checked = checked;
-            $('grading-toggle-label').textContent = checked ? 'Bật' : 'Tắt';
-            if (checked) {
-                $('grading-model-fields').classList.remove('hidden');
-                $('grading-model-disabled-note').classList.add('hidden');
-            } else {
-                $('grading-model-fields').classList.add('hidden');
-                $('grading-model-disabled-note').classList.remove('hidden');
-            }
+        function openSettings() {
+            // Double Check luôn bật — không cần khôi phục cờ bật/tắt nữa
+            $('modal-settings').classList.remove('hidden');
+            applyModelSettingsRoleUI();
+            loadModelNamesIntoSettings();
         }
 
-        function openSettings() {
-            // Restore main model (admin/ultra có thể đã lưu custom model vào localStorage)
-            const mainModel = localStorage.getItem('medsim_main_model') || '';
-            $('input-main-model').value = mainModel;
+        // Ẩn/hiện section model theo role:
+        //   free/vip/pro → không thấy bất kỳ ô model nào
+        //   ultra        → chỉ thấy ô cá nhân
+        //   admin        → thấy ô cá nhân + ô chung cho Pro/Vip/Free
+        function applyModelSettingsRoleUI() {
+            const role = currentProfile?.role || 'free';
+            const section  = $('settings-model-section');
+            const groupBox = $('settings-group-model');
+            if (!section) return;
 
-            // Restore grading model state
-            const gradingEnabled = localStorage.getItem('medsim_grading_enabled') === 'true';
-            const gradingModel   = localStorage.getItem('medsim_grading_model') || '';
-            syncGradingToggleUI(gradingEnabled);
-            $('input-grading-model').value = gradingModel;
-
-            // Sync the always-visible judge toggle
-            if ($('toggle-judge-status')) {
-                $('toggle-judge-status').checked = gradingEnabled;
-                $('judge-status-label').textContent = gradingEnabled ? 'Bật' : 'Tắt';
+            if (role !== 'admin' && role !== 'ultra') {
+                section.classList.add('hidden');   // free/vip/pro: không có phần model
+                return;
             }
+            section.classList.remove('hidden');
+            if (groupBox) groupBox.classList.toggle('hidden', role !== 'admin');
+        }
 
-            $('modal-settings').classList.remove('hidden');
+        // Tải model từ server (role quyết định thấy gì)
+        async function loadModelNamesIntoSettings() {
+            const role = currentProfile?.role || 'free';
+            if (role !== 'admin' && role !== 'ultra') return;
+            try {
+                const r = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentSession.access_token}` },
+                    body: JSON.stringify({ action: 'get_models' })
+                });
+                if (!r.ok) return;
+                const d = await r.json();
+
+                // Model đang dùng (hiện cho mục đích theo dõi)
+                if ($('status-main-model'))   $('status-main-model').textContent   = d.mainModel  || '';
+                if ($('status-judge-model'))  $('status-judge-model').textContent  = d.judgeModel || '';
+
+                // Ô cá nhân (admin/ultra)
+                if ($('input-main-model'))     $('input-main-model').value     = d.customMainModel  || '';
+                if ($('input-grading-model'))  $('input-grading-model').value  = d.customJudgeModel || '';
+
+                // Ô chung cho Pro/Vip/Free (chỉ admin)
+                if (role === 'admin') {
+                    if ($('input-group-main-model'))    $('input-group-main-model').value    = d.groupMainModel  || '';
+                    if ($('input-group-grading-model')) $('input-group-grading-model').value = d.groupJudgeModel || '';
+                }
+            } catch (e) {
+                console.warn('Không tải được model:', e);
+            }
         }
 
         function closeSettings() {
             $('modal-settings').classList.add('hidden');
         }
 
+        // Gửi thay đổi model lên server
+        async function postModel(action, payload) {
+            const r = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentSession.access_token}` },
+                body: JSON.stringify({ action, ...payload })
+            });
+            if (!r.ok) {
+                const err = await r.json().catch(() => ({}));
+                throw new Error(err.error || 'Lưu thất bại');
+            }
+        }
+
         function saveModelsFromModal() {
-            // Chỉ admin/ultra mới thấy và lưu model (server vẫn dùng env vars mặc định nếu không set)
-            const mainModel = $('input-main-model').value.trim();
-            localStorage.setItem('medsim_main_model', mainModel);
+            const mainModel  = ($('input-main-model')?.value || '').trim();
+            const judgeModel = ($('input-grading-model')?.value || '').trim();
+            postModel('set_own_model', { customMainModel: mainModel, customJudgeModel: judgeModel })
+                .then(() => showToast(`✅ Đã lưu model cá nhân: ${mainModel || '(mặc định)'} | Judge: ${judgeModel || '(mặc định)'}`, 'bg-sky-600'))
+                .catch(e => showToast('⚠️ ' + e.message, 'bg-rose-600'));
+        }
 
-            // Save grading model
-            const gradingEnabled = $('toggle-grading-model').checked;
-            const gradingModel   = $('input-grading-model').value.trim();
-            localStorage.setItem('medsim_grading_enabled', gradingEnabled ? 'true' : 'false');
-            localStorage.setItem('medsim_grading_model',   gradingModel);
+        function resetOwnModels() {
+            if ($('input-main-model'))    $('input-main-model').value    = '';
+            if ($('input-grading-model')) $('input-grading-model').value = '';
+            postModel('set_own_model', { customMainModel: '', customJudgeModel: '' })
+                .then(() => showToast('↩️ Đã khôi phục model mặc định hệ thống', 'bg-slate-600'))
+                .catch(e => showToast('⚠️ ' + e.message, 'bg-rose-600'));
+        }
 
-            const mainLabel  = mainModel || '(model mặc định của server)';
-            const judgeLabel = gradingEnabled ? ` | Judge: ${gradingModel || '(mặc định)'}` : '';
-            showToast(`✅ Model đã lưu: ${mainLabel}${judgeLabel}`, 'bg-sky-600');
+        function saveGroupModels() {
+            const groupMain  = ($('input-group-main-model')?.value    || '').trim();
+            const groupJudge = ($('input-group-grading-model')?.value || '').trim();
+            postModel('set_group_model', { groupMainModel: groupMain, groupJudgeModel: groupJudge })
+                .then(() => showToast(`✅ Đã lưu model Pro/Vip/Free: ${groupMain || '(mặc định)'} | Judge: ${groupJudge || '(mặc định)'}`, 'bg-emerald-600'))
+                .catch(e => showToast('⚠️ ' + e.message, 'bg-rose-600'));
         }
 
         function saveSettingsFromModal() {
@@ -1661,15 +1731,11 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                 elFollowupSection.classList.remove('hidden');
                 elEvalResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-                // Double Check UI state
+                // Double Check luôn bật (getGradingModel() luôn trả 'judge')
                 doubleCheckReport = null;
                 elBtnShowReport.classList.add('hidden');
-                if (getGradingModel()) {
-                    elBtnDoubleCheck.classList.remove('hidden');
-                    elBtnDoubleCheck.style.display = 'inline-flex';
-                } else {
-                    elBtnDoubleCheck.classList.add('hidden');
-                }
+                elBtnDoubleCheck.classList.remove('hidden');
+                elBtnDoubleCheck.style.display = 'inline-flex';
 
                 // Auto-save to Gist (non-blocking)
                 saveCurrentCase();
@@ -1689,11 +1755,6 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         // DOUBLE CHECK (JUDGE)
         // =========================================================
         async function doubleCheck() {
-            const gradingModelName = getGradingModel();
-            if (!gradingModelName) {
-                showToast('Chưa cấu hình Grading Model (Judge).', 'bg-amber-500');
-                return;
-            }
             if (!initialEvaluation) {
                 showToast('Chưa có đánh giá ban đầu.', 'bg-amber-500');
                 return;
@@ -2176,16 +2237,9 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         $('btn-close-settings').addEventListener('click', closeSettings);
         $('btn-cancel-settings').addEventListener('click', closeSettings);
         $('btn-save-models').addEventListener('click', saveModelsFromModal);
+        $('btn-reset-models').addEventListener('click', resetOwnModels);
+        $('btn-save-group-models')?.addEventListener('click', saveGroupModels);
         // btn-save-settings, btn-test-connection, btn-create-gist removed (Gist section deleted)
-        $('toggle-grading-model')?.addEventListener('change', e => syncGradingToggleUI(e.target.checked));
-
-        // Sync toggle-judge-status (always-visible) with toggle-grading-model (admin section)
-        $('toggle-judge-status')?.addEventListener('change', e => {
-            if ($('toggle-grading-model')) $('toggle-grading-model').checked = e.target.checked;
-            syncGradingToggleUI(e.target.checked);
-            localStorage.setItem('medsim_grading_enabled', e.target.checked ? 'true' : 'false');
-            if ($('judge-status-label')) $('judge-status-label').textContent = e.target.checked ? 'Bật' : 'Tắt';
-        });
         $('modal-settings').addEventListener('click', e => {
             if (e.target === $('modal-settings')) closeSettings();
         });
@@ -2313,11 +2367,8 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                     $('btn-open-admin').classList.add('flex');
                 }
 
-                // Ẩn model settings với free/vip/pro
-                if (!['admin', 'ultra'].includes(profile.role)) {
-                    const modelSection = document.querySelector('#modal-settings .px-6.py-4.space-y-5 > div:first-child');
-                    if (modelSection) modelSection.classList.add('hidden');
-                }
+                // Model settings — hiển thị cho mọi role (không cần ẩn tên model)
+                // Tên model sẽ được load vào Settings khi mở
 
                 // Ẩn phần Gist Settings — không cần nữa, dùng Supabase
                 const gistSection = document.getElementById('settings-gist-section');
