@@ -122,11 +122,15 @@ exports.handler = async (event) => {
     }
   } catch (e) { console.error('Usage increment failed:', e); }
 
-  // ── 8. Trả về kết quả kèm thông tin usage ───────────────────────
+  // ── 8. Trả về kết quả — CHỈ những field cần thiết, ẩn model name ─
   return {
     statusCode: 200, headers,
     body: JSON.stringify({
-      ...aiData,
+      id:      aiData.id,
+      object:  aiData.object,
+      choices: aiData.choices,   // nội dung trả lời
+      usage:   aiData.usage,     // token usage (không có model name)
+      // model: ẩn hoàn toàn — không trả về client
       _usage: { used: currentCount + 1, limit: profile.daily_limit, role: profile.role }
     })
   };
