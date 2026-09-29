@@ -1,0 +1,14 @@
+# Credentials — KHÔNG BAO GIỜ commit
+*credential*
+*credentials*
+*.token
+.netrc
+.env
+.env.*
+
+# Hệ điều hành / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
