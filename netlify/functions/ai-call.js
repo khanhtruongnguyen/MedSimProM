@@ -109,8 +109,12 @@ exports.handler = async (event) => {
       const t = await r.text();
 
       // Model không tồn tại trên provider → lỗi cấu hình, cần admin sửa env var
-      if (t.includes('not_found_error') || t.includes('"model"')) {
-        console.error(`AI model unavailable: "${model}" — ${t}`);
+      const isModelMissing =
+        t.includes('not_found_error') ||
+        t.includes('model_not_found') ||
+        t.includes('is not available');
+      if (isModelMissing) {
+        console.error(`AI model unavailable: "${model}" (env var ${modelType === 'judge' ? 'AI_JUDGE_MODEL' : 'AI_MAIN_MODEL'}) — ${t}`);
         return {
           statusCode: 500, headers,
           body: JSON.stringify({
