@@ -591,6 +591,12 @@
 
     <script>
         // =========================================================
+        // CLOUDFLARE WORKER API BASE URL
+        // =========================================================
+        const API_BASE = 'https://medsim-api.medsim.workers.dev';
+        // =========================================================
+
+        // =========================================================
         // TỰ CHỐNG NHÌN MÃ NGUỒN (rào cản tâm lý — không phải bảo mật thật)
         // =========================================================
         (function antiViewSource() {
@@ -1082,10 +1088,10 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             throw lastErr || new Error('Lỗi không xác định');
         }
 
-        // ── Gọi AI qua Netlify Function (giấu key) ──────────────────
+        // ── Gọi AI qua Cloudflare Worker (giấu key) ──────────────────
         async function apiCall(messages, extra = {}, modelType = 'main') {
             if (!currentSession) throw new Error('Chưa đăng nhập');
-            const data = await fetchWithRetry('/api/ai-call', {
+            const data = await fetchWithRetry(`${API_BASE}/api/ai-call`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1106,7 +1112,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
 
         async function apiCallGrading(messages, extra = {}) {
             if (!currentSession) throw new Error('Chưa đăng nhập');
-            const data = await fetchWithRetry('/api/ai-call', {
+            const data = await fetchWithRetry(`${API_BASE}/api/ai-call`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1445,7 +1451,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             const role = currentProfile?.role || 'free';
             if (role !== 'admin' && role !== 'ultra') return;
             try {
-                const r = await fetch('/api/admin', {
+                const r = await fetch(`${API_BASE}/api/admin`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentSession.access_token}` },
                     body: JSON.stringify({ action: 'get_models' })
@@ -1477,7 +1483,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
 
         // Gửi thay đổi model lên server
         async function postModel(action, payload) {
-            const r = await fetch('/api/admin', {
+            const r = await fetch(`${API_BASE}/api/admin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentSession.access_token}` },
                 body: JSON.stringify({ action, ...payload })
@@ -2501,7 +2507,7 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         }
 
         async function adminFetch(action, extra = {}) {
-            const res = await fetch('/api/admin', {
+            const res = await fetch(`${API_BASE}/api/admin`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
