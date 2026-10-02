@@ -202,17 +202,59 @@
                     </div>
                     <hr class="border-slate-100">
                     <div>
-                        <h4 class="font-semibold text-slate-700 flex items-center text-sm"><i class="fas fa-history mr-2 text-sky-500"></i> Bệnh sử</h4>
+                        <h4 class="font-semibold text-slate-700 flex items-center text-sm">
+                            <i class="fas fa-history mr-2 text-sky-500"></i> Bệnh sử
+                            <button id="btn-toggle-timeline" class="hidden items-center gap-1.5 ml-auto text-[11px] px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors font-normal">
+                                <i class="fas fa-list-ul"></i> <span>Xem dạng văn bản</span>
+                            </button>
+                        </h4>
+                        <div id="timeline-list" class="hidden mt-3 ml-6 space-y-0"></div>
                         <p id="pt-history" class="text-slate-700 mt-1.5 pl-6 leading-relaxed whitespace-pre-wrap">-</p>
                     </div>
                     <hr class="border-slate-100">
                     <div>
-                        <h4 class="font-semibold text-slate-700 flex items-center text-sm"><i class="fas fa-file-medical mr-2 text-sky-500"></i> Tiền sử</h4>
+                        <h4 class="font-semibold text-slate-700 flex items-center text-sm">
+                            <i class="fas fa-file-medical mr-2 text-sky-500"></i> Tiền sử
+                            <button id="btn-toggle-chips" class="hidden items-center gap-1.5 ml-auto text-[11px] px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors font-normal">
+                                <i class="fas fa-list-ul"></i> <span>Xem dạng văn bản</span>
+                            </button>
+                        </h4>
+                        <div id="past-chips" class="hidden flex-wrap gap-1.5 mt-2.5 ml-6"></div>
                         <p id="pt-past" class="text-slate-700 mt-1.5 pl-6">-</p>
                     </div>
                     <hr class="border-slate-100">
                     <div>
-                        <h4 class="font-semibold text-slate-700 flex items-center text-sm"><i class="fas fa-heartbeat mr-2 text-sky-500"></i> Khám lâm sàng</h4>
+                        <h4 class="font-semibold text-slate-700 flex items-center text-sm">
+                            <i class="fas fa-heartbeat mr-2 text-sky-500"></i> Khám lâm sàng
+                            <button id="btn-toggle-exam" class="hidden items-center gap-1.5 ml-auto text-[11px] px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors font-normal">
+                                <i class="fas fa-list-ul"></i> <span>Xem dạng văn bản</span>
+                            </button>
+                        </h4>
+                        <div id="exam-structured" class="hidden mt-2.5 ml-6 space-y-3">
+                            <!-- Bảng sinh hiệu (có tham chiếu) -->
+                            <div>
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dấu hiệu sinh tồn</span>
+                                    <span id="vitals-badge" class="hidden text-[10px] px-1.5 py-0.5 rounded-full font-bold"></span>
+                                </div>
+                                <table class="w-full text-xs border border-slate-200 rounded-lg overflow-hidden">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500">
+                                            <th class="text-left font-semibold px-2.5 py-1.5">Chỉ số</th>
+                                            <th class="text-right font-semibold px-2.5 py-1.5">Kết quả</th>
+                                            <th class="text-left font-semibold px-2.5 py-1.5">Tham chiếu</th>
+                                            <th class="text-center font-semibold px-2.5 py-1.5">T</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vitals-body"></tbody>
+                                </table>
+                            </div>
+                            <!-- Dấu hiệu thực thể theo hệ cơ quan -->
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Thực thể</span>
+                                <div id="exam-findings" class="space-y-1"></div>
+                            </div>
+                        </div>
                         <p id="pt-exam" class="text-slate-700 mt-1.5 pl-6 leading-relaxed whitespace-pre-wrap">-</p>
                     </div>
                     <hr class="border-slate-100">
@@ -804,6 +846,38 @@ NHIỆM VỤ: Tạo ca lâm sàng + rubric đánh giá nội bộ. Trả về JS
         "bat_thuong": true|false,
         "huu_ich": string
       }
+    ],
+    "benh_su_timeline": [
+      {
+        "thoi_diem": string,
+        "dien_bien": string,
+        "muc_do": "nhẹ|vừa|nặng",
+        "quan_trong": true|false
+      }
+    ],
+    "tien_su_chi_tiet": [
+      {
+        "muc": string,
+        "chi_tiet": string,
+        "loai": "bệnh_lý|phẫu_thuật|dị ứng|thói_quen|di_truyền",
+        "lien_quan": true|false
+      }
+    ],
+    "sinh_hieu": [
+      {
+        "ten": string,
+        "ket_qua": string,
+        "don_vi": string,
+        "khoang_tham_chieu": string,
+        "bat_thuong": true|false
+      }
+    ],
+    "kham_thuc_the": [
+      {
+        "he": string,
+        "phat_hien": string,
+        "bat_thuong": true|false
+      }
     ]
   },
   "rubric": {
@@ -864,7 +938,43 @@ Quy tắc:
 - CẢ CHỈ SỐ BÌNH THƯỜNG cũng phải có mặt (giá trị đúng tên thường) — để học viên tập so sánh
 - Khoảng tham chiếu phải ĐÚNG với quy chuẩn Việt Nam/định chuẩn lâm sàng thông dụng. KHÔNG bịa khoảng vô lý
 - KHÔNG để lộ chẩn đoán trong "huu_ich" (viết theo kiểu "gợi ý...", "theo dõi...", không viết thẳng tên bệnh đáp án)
-• "can_lam_sang_co_ban": giữ lại như bản tóm tắt dạng text 1–2 dòng (dùng để in/đọc nhanh), không bắt buộc chi tiết`;
+• "can_lam_sang_co_ban": giữ lại như bản tóm tắt dạng text 1–2 dòng (dùng để in/đọc nhanh), không bắt buộc chi tiết
+
+═══ QUY TẮC 4 MẢNG CẤU TRÚC CÒN LẠI (BẮT BUỘC) ═══
+Mục đích: bên cạnh bản văn (benh_su / tien_su / kham_lam_sang), PHẢI xuất thêm dạng
+cấu trúc để UI render đẹp. Bản văn và bản cấu trúc phải MÔ TẢ CÙNG DỮ KIỆN
+(không được mâu thuẫn, không thêm dữ kiện mới).
+
+▸ "benh_su_timeline" (3–6 mục) — diễn tiến bệnh theo thời gian, CŨ → MỚI:
+  • "thoi_diem": mốc thời gian tương đối, VD "3 ngày trước", "Sáng nay", "2 giờ trước". KHÔNG dùng ngày tuyệt đối
+  • "dien_bien": 1 câu mô tả triệu chứng/diễn tiến tại mốc đó, có chi tiết cụ thể (vị trí, tính chất, con số)
+  • "muc_do": "nhẹ" | "vừa" | "nặng" — đánh giá mức độ tại thời điểm đó
+  • "quan_trong": true nếu đây là dữ kiện then chốt định hướng chẩn đoán, false nếu là nền
+
+▸ "tien_su_chi_tiet" (2–6 mục) — tách tiền sử thành từng mục riêng:
+  • "muc": tên vấn đề ngắn gọn, VD "Đái tháo đường type 2", "Dị ứng Penicillin"
+  • "chi_tiet": thời gian/thuốc/kiểm soát, VD "5 năm, đang dùng Metformin"
+  • "loai": "bệnh_lý" | "phẫu_thuật" | "dị ứng" | "thói_quen" | "di_truyền"
+  • "lien_quan": true nếu mục này LIÊN QUAN tới ca bệnh hiện tại (yếu tố nguy cơ / chống chỉ định / gợi ý chẩn đoán), false nếu không
+
+▸ "sinh_hieu" (4–7 mục) — dấu hiệu sinh tồn, dùng CHUNG định dạng với "can_lam_sang":
+  • Bắt buộc có đủ: Nhiệt độ, Mạch, Huyết áp, Nhịp thở, SpO₂ (nếu ca có). Thêm cân nặng/BMI/đau nếu cần
+  • "ket_qua": chỉ con số. VD "38,5", "150/95", "102"
+  • "don_vi": "°C", "lần/phút", "mmHg", "%"
+  • "khoang_tham_chieu": chuẩn người lớn. VD "36,0 – 37,2", "60 – 100", "< 130/85", "16 – 20", "95 – 100"
+  • "bat_thuong": true nếu ngoài khoảng
+  • ⚠️ Nhiệt độ/Mạch/HA/Nhịp thở trong "sinh_hieu" PHẢI KHỚP với "kham_lam_sang" và "benh_su"
+
+▸ "kham_thuc_the" (3–7 mục) — khám từng hệ cơ quan, CẢ bình thường lẫn bất thường:
+  • "he": tên hệ, VD "Tim mạch", "Hô hấp", "Bụng", "Thần kinh", "Da niêm", "Cơ xương khớp"
+  • "phat_hien": mô tả ngắn gọn dấu hiệu tìm được, kèm nghiệm pháp nếu có. VD "Ấn đau hạ sườn phải, Murphy (+)"
+  • "bat_thuong": true nếu hệ này có dấu hiệu bệnh lý, false nếu bình thường
+  • PHẢI có ít nhất 1 hệ bình thường (để học viên tập phân biệt)
+
+QUY TẮC CHUNG CHO 4 MẢNG:
+- Dữ kiện phải NHẤT QUÁN với bản văn tương ứng và với rubric
+- KHÔNG để lộ chẩn đoán: không viết tên bệnh đáp án trong bất kỳ trường nào
+- Nếu một mục không có dữ liệu thật trong ca → bỏ mục đó, KHÔNG bịa thêm`;
 
         const EVAL_SYSTEM_PROMPT = `Bạn là clinical evaluation engine — đánh giá cấu trúc khắt khe, không khoan nhượng với sự mơ hồ và thiếu cụ thể.
 
@@ -2227,6 +2337,14 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                     } else {
                         parsed.patient.can_lam_sang = [];
                     }
+                    // 4 mảng cấu trúc phụ (timeline / chips / sinh hiệu / thực thể) — optional
+                    const clean = (arr, keys) => Array.isArray(arr)
+                        ? arr.filter(r => r && keys.every(k => r[k] != null && String(r[k]).trim() !== ''))
+                        : [];
+                    parsed.patient.benh_su_timeline = clean(parsed.patient.benh_su_timeline, ['thoi_diem', 'dien_bien']);
+                    parsed.patient.tien_su_chi_tiet = clean(parsed.patient.tien_su_chi_tiet, ['muc']);
+                    parsed.patient.sinh_hieu        = clean(parsed.patient.sinh_hieu,        ['ten', 'ket_qua']);
+                    parsed.patient.kham_thuc_the    = clean(parsed.patient.kham_thuc_the,    ['he', 'phat_hien']);
                     if (parsed.validation?.consistent === false && attempt < 2) {
                         console.warn(`Attempt ${attempt+1} failed validation:`, parsed.validation.issues);
                         await new Promise(r => setTimeout(r, 800)); continue;
@@ -2250,6 +2368,121 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
             $('start-spinner').classList.add('hidden');
             elBtnStart.disabled = false;
             elBtnNav.disabled   = false;
+        }
+
+        // =========================================================
+        // RENDER TIMELINE — Bệnh sử dạng dòng thời gian
+        // =========================================================
+        let timelineStructuredVisible = true;
+        function toggleTimeline() {
+            timelineStructuredVisible = !timelineStructuredVisible;
+            $('btn-toggle-timeline').querySelector('span').textContent = timelineStructuredVisible ? 'Xem dạng văn bản' : 'Xem dạng timeline';
+            $('timeline-list').classList.toggle('hidden', !timelineStructuredVisible);
+            $('pt-history').classList.toggle('hidden', timelineStructuredVisible);
+        }
+        function renderTimeline() {
+            const items = Array.isArray(currentCaseData?.benh_su_timeline) ? currentCaseData.benh_su_timeline : [];
+            const list = $('timeline-list'), btn = $('btn-toggle-timeline');
+            if (!items.length) { list.classList.add('hidden'); btn.classList.add('hidden'); $('pt-history').classList.remove('hidden'); return; }
+            const sevCls = { 'nhẹ': 'bg-slate-100 text-slate-500', 'vừa': 'bg-amber-100 text-amber-600', 'nặng': 'bg-rose-100 text-rose-600' };
+            list.innerHTML = items.map((it, i) => `
+                <div class="flex gap-2.5">
+                    <div class="flex flex-col items-center pt-1">
+                        <span class="w-2 h-2 rounded-full shrink-0 ${it.quan_trong ? 'bg-sky-500 ring-4 ring-sky-100' : 'bg-slate-300'}"></span>
+                        ${i < items.length - 1 ? '<span class="flex-1 w-px bg-slate-200 my-0.5"></span>' : ''}
+                    </div>
+                    <div class="pb-3 min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11px] font-semibold text-slate-500">${it.thoi_diem}</span>
+                            ${it.muc_do ? `<span class="text-[10px] px-1.5 py-0.5 rounded ${sevCls[it.muc_do] || sevCls['nhẹ']}">${it.muc_do}</span>` : ''}
+                            ${it.quan_trong ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-600 font-semibold">then chốt</span>' : ''}
+                        </div>
+                        <p class="text-[13px] text-slate-700 leading-relaxed mt-0.5">${it.dien_bien}</p>
+                    </div>
+                </div>`).join('');
+            btn.classList.remove('hidden'); btn.classList.add('inline-flex');
+            list.classList.toggle('hidden', !timelineStructuredVisible);
+            $('pt-history').classList.toggle('hidden', timelineStructuredVisible);
+        }
+
+        // =========================================================
+        // RENDER CHIPS — Tiền sử dạng chip màu
+        // =========================================================
+        let chipsStructuredVisible = true;
+        function toggleChips() {
+            chipsStructuredVisible = !chipsStructuredVisible;
+            $('btn-toggle-chips').querySelector('span').textContent = chipsStructuredVisible ? 'Xem dạng văn bản' : 'Xem dạng chip';
+            $('past-chips').classList.toggle('hidden', !chipsStructuredVisible);
+            $('pt-past').classList.toggle('hidden', chipsStructuredVisible);
+        }
+        function renderPastChips() {
+            const items = Array.isArray(currentCaseData?.tien_su_chi_tiet) ? currentCaseData.tien_su_chi_tiet : [];
+            const box = $('past-chips'), btn = $('btn-toggle-chips');
+            if (!items.length) { box.classList.add('hidden'); btn.classList.add('hidden'); $('pt-past').classList.remove('hidden'); return; }
+            const ICON = { 'bệnh_lý': 'fa-heart-pulse', 'phẫu_thuật': 'fa-user-doctor', 'dị ứng': 'fa-triangle-exclamation', 'thói_quen': 'fa-smoking', 'di_truyền': 'fa-dna' };
+            box.innerHTML = items.map(it => {
+                const rel = it.lien_quan === true;
+                return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[12px] ${rel ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}" ${rel ? 'title="Liên quan tới ca hiện tại"' : ''}>
+                    <i class="fas ${ICON[it.loai] || 'fa-circle'} ${rel ? 'text-amber-500' : 'text-slate-400'} text-[11px]"></i>
+                    <span class="font-medium">${it.muc}</span>
+                    ${it.chi_tiet ? `<span class="text-slate-400 text-[11px]">· ${it.chi_tiet}</span>` : ''}
+                </span>`;
+            }).join('');
+            btn.classList.remove('hidden'); btn.classList.add('inline-flex');
+            box.classList.toggle('hidden', !chipsStructuredVisible);
+            $('pt-past').classList.toggle('hidden', chipsStructuredVisible);
+        }
+
+        // =========================================================
+        // RENDER EXAM — Sinh hiệu (bảng) + Thực thể theo hệ
+        // =========================================================
+        let examStructuredVisible = true;
+        function toggleExam() {
+            examStructuredVisible = !examStructuredVisible;
+            $('btn-toggle-exam').querySelector('span').textContent = examStructuredVisible ? 'Xem dạng văn bản' : 'Xem dạng bảng';
+            $('exam-structured').classList.toggle('hidden', !examStructuredVisible);
+            $('pt-exam').classList.toggle('hidden', examStructuredVisible);
+        }
+        function renderExam() {
+            const vitals = Array.isArray(currentCaseData?.sinh_hieu) ? currentCaseData.sinh_hieu : [];
+            const exam   = Array.isArray(currentCaseData?.kham_thuc_the) ? currentCaseData.kham_thuc_the : [];
+            const btn = $('btn-toggle-exam'), wrap = $('exam-structured');
+            if (!vitals.length && !exam.length) { wrap.classList.add('hidden'); btn.classList.add('hidden'); $('pt-exam').classList.remove('hidden'); return; }
+
+            // Bảng sinh hiệu — dùng chung logic suy hướng với labs
+            let abn = 0;
+            $('vitals-body').innerHTML = vitals.map(r => {
+                const val = String(r.ket_qua ?? '').trim(), unit = String(r.don_vi ?? '').trim();
+                const ref = String(r.khoang_tham_chieu ?? '').trim() || '—';
+                const isAb = r.bat_thuong === true;
+                const dir = isAb ? inferAbnormalDirection(val, ref) : null;
+                if (isAb) abn++;
+                return `<tr class="border-t border-slate-100 hover:bg-slate-50/60">
+                    <td class="px-2.5 py-1.5 text-slate-600">${r.ten}</td>
+                    <td class="px-2.5 py-1.5 text-right ${isAb ? 'font-bold text-rose-600' : 'text-slate-700'}">${val}${unit ? ` <span class="font-normal text-slate-400 text-[10px]">${unit}</span>` : ''}</td>
+                    <td class="px-2.5 py-1.5 text-slate-400">${ref}</td>
+                    <td class="px-2.5 py-1.5 text-center">${isAb ? `<span class="inline-block px-1.5 py-0.5 rounded font-bold text-[10px] ${dir === 'low' ? 'bg-blue-100 text-blue-600' : 'bg-rose-100 text-rose-600'}">${dir === 'low' ? 'T' : 'H'}</span>` : '<span class="text-slate-300 text-[10px]">–</span>'}</td>
+                </tr>`;
+            }).join('');
+
+            // Dấu hiệu thực thể theo hệ
+            $('exam-findings').innerHTML = exam.map(f => {
+                const isAb = f.bat_thuong === true;
+                return `<div class="flex items-start gap-2 text-[13px]">
+                    <i class="fas ${isAb ? 'fa-circle-exclamation text-rose-400' : 'fa-circle-check text-emerald-400'} text-[11px] mt-1"></i>
+                    <span class="font-semibold text-slate-700 w-24 shrink-0">${f.he}</span>
+                    <span class="flex-1 min-w-0 ${isAb ? 'text-slate-700 font-medium' : 'text-slate-500'}">${f.phat_hien}</span>
+                </div>`;
+            }).join('');
+
+            // Badge tổng sinh hiệu bất thường
+            const vb = $('vitals-badge');
+            vb.textContent = abn > 0 ? `${abn} bất thường` : 'Ổn định';
+            vb.className = `text-[10px] px-1.5 py-0.5 rounded-full font-bold ${abn > 0 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`;
+
+            btn.classList.remove('hidden'); btn.classList.add('inline-flex');
+            wrap.classList.toggle('hidden', !examStructuredVisible);
+            $('pt-exam').classList.toggle('hidden', examStructuredVisible);
         }
 
         // =========================================================
@@ -2348,18 +2581,26 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
             $('pt-gender').innerText  = currentCaseData.gioi_tinh;
             $('pt-job').innerText     = currentCaseData.nghe_nghiep;
             $('pt-reason').innerText  = currentCaseData.ly_do_nhap_vien;
-            $('pt-history').innerText = currentCaseData.benh_su;
-            $('pt-past').innerText    = currentCaseData.tien_su;
-            $('pt-exam').innerText    = currentCaseData.kham_lam_sang;
-            // Reset trạng thái bảng labs trước (phải chạy trước renderLabsTable)
+
+            // Reset cờ hiển thị trước mỗi lần render (phải chạy TRƯỚC các hàm render*)
+            labsRefVisible = true;
+            timelineStructuredVisible = true;
+            chipsStructuredVisible = true;
+            examStructuredVisible = true;
             $('pt-labs').classList.remove('hidden');
             $('labs-table-wrap').classList.add('hidden');
             $('btn-toggle-labs').classList.add('hidden');
             $('btn-toggle-labs').classList.remove('inline-flex');
             $('labs-badge').classList.add('hidden');
-            labsRefVisible = true;
 
+            $('pt-history').innerText = currentCaseData.benh_su;
+            $('pt-past').innerText    = currentCaseData.tien_su;
+            $('pt-exam').innerText    = currentCaseData.kham_lam_sang;
             $('pt-labs').innerText    = currentCaseData.can_lam_sang_co_ban;
+
+            renderTimeline();
+            renderPastChips();
+            renderExam();
             renderLabsTable();
 
             // Placeholder + label theo chế độ học
@@ -2976,6 +3217,9 @@ ${DIFFERENTIAL_FEEDBACK_SECTION}
         $('btn-reveal').addEventListener('click', revealAnswer);
         $('btn-open-stats').addEventListener('click', openStats);
         $('btn-toggle-labs').addEventListener('click', toggleLabsRef);
+        $('btn-toggle-timeline').addEventListener('click', toggleTimeline);
+        $('btn-toggle-chips').addEventListener('click', toggleChips);
+        $('btn-toggle-exam').addEventListener('click', toggleExam);
         $('btn-close-stats').addEventListener('click', () => $('modal-stats').classList.add('hidden'));
         $('modal-stats').addEventListener('click', e => { if (e.target === $('modal-stats')) $('modal-stats').classList.add('hidden'); });
         elFollowupInput.addEventListener('keydown', e => {
