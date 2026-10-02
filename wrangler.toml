@@ -1,0 +1,16 @@
+name = "medsim-api"
+main = "worker/index.js"
+compatibility_date = "2026-10-01"
+
+# Client vẫn gọi /api/ai-call và /api/admin → không cần sửa index.html
+routes = [
+  { pattern = "api/*", zone_name = "khanhtruongnguyen.me" }
+]
+
+# Env vars cần đặt trong dashboard (Workers & Pages → Settings → Variables):
+#   SUPABASE_URL, SUPABASE_SERVICE_KEY,
+#   AI_API_KEY, AI_API_BASE_URL,
+#   AI_MAIN_MODEL, AI_JUDGE_MODEL
+# (Secrets nên khai báo secret ở đây rồi `wrangler secret put <tên>`)
+# [vars]
+# SUPABASE_URL = ""

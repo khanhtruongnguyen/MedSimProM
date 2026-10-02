@@ -6,8 +6,15 @@
 .env
 .env.*
 
+# Handoff — chứa secret, KHÔNG commit
+HANDOFF.md
+
+# Cloudflare Worker — chỉ chứa logic, KHÔNG chứa secret (secret nằm ở dashboard)
+# Folder worker/ và functions/ VẪN commit (code, không secret).
+
 # Hệ điều hành / editor
 Thumbs.db
+
 Desktop.ini
 .DS_Store
 .vscode/

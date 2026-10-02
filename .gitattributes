@@ -1,0 +1,9 @@
+# GitHub Actions YAML (Cloudflare) — LF
+*.yml text eol=lf
+.github/** text eol=lf
+
+# Cloudflare Pages Functions (đường dẫn chứa [[]])
+functions/** -text
+
+# JavaScript
+*.js text
