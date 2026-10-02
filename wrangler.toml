@@ -2,10 +2,12 @@ name = "medsim-api"
 main = "worker/index.js"
 compatibility_date = "2026-10-01"
 
-# Client vẫn gọi /api/ai-call và /api/admin → không cần sửa index.html
-routes = [
-  { pattern = "api/*", zone_name = "khanhtruongnguyen.me" }
-]
+# KHÔNG khai báo routes → dùng subdomain .workers.dev mặc định
+#   URL: https://medsim-api.khanhtruongnguyen.workers.dev
+# Sau này nếu có custom domain (vd: api.tenmien.com) → uncomment routes bên dưới:
+# routes = [
+#   { pattern = "api/*", zone_name = "tenmien.com" }
+# ]
 
 # Env vars cần đặt trong dashboard (Workers & Pages → Settings → Variables):
 #   SUPABASE_URL, SUPABASE_SERVICE_KEY,
