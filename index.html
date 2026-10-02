@@ -217,7 +217,33 @@
                     </div>
                     <hr class="border-slate-100">
                     <div>
-                        <h4 class="font-semibold text-slate-700 flex items-center text-sm"><i class="fas fa-flask mr-2 text-sky-500"></i> Cận lâm sàng cơ bản có sẵn</h4>
+                        <h4 class="font-semibold text-slate-700 flex items-center text-sm">
+                            <i class="fas fa-flask mr-2 text-sky-500"></i> Cận lâm sàng cơ bản có sẵn
+                        </h4>
+                        <!-- Toggle: hiện giá trị tiêu chuẩn / đánh dấu bất thường -->
+                        <div class="flex items-center gap-2 mt-2 ml-6 mb-1">
+                            <span id="labs-badge" class="hidden text-[10px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 font-bold"></span>
+                            <button id="btn-toggle-labs" class="hidden items-center gap-1.5 text-[11px] px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors">
+                                <i class="fas fa-eye-slash"></i> <span>Ẩn giá trị tiêu chuẩn</span>
+                            </button>
+                        </div>
+                        <div id="labs-table-wrap" class="hidden mt-1 ml-6">
+                            <table class="w-full text-xs border border-slate-200 rounded-lg overflow-hidden">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500">
+                                        <th class="text-left font-semibold px-2.5 py-1.5">Chỉ số</th>
+                                        <th class="text-right font-semibold px-2.5 py-1.5">Kết quả</th>
+                                        <th class="text-left font-semibold px-2.5 py-1.5">Tham chiếu</th>
+                                        <th class="text-center font-semibold px-2.5 py-1.5">T</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="labs-table-body"></tbody>
+                            </table>
+                            <p class="text-[10px] text-slate-400 mt-1.5 italic">
+                                T = tham chiếu · <span class="text-rose-500 font-medium">H</span> = cao hơn ngưỡng,
+                                <span class="text-blue-500 font-medium">T</span> = thấp hơn ngưỡng
+                            </p>
+                        </div>
                         <p id="pt-labs" class="text-slate-700 mt-1.5 pl-6 leading-relaxed whitespace-pre-wrap">-</p>
                     </div>
                 </div>
@@ -768,7 +794,17 @@ NHIỆM VỤ: Tạo ca lâm sàng + rubric đánh giá nội bộ. Trả về JS
     "benh_su": string,
     "tien_su": string,
     "kham_lam_sang": string,
-    "can_lam_sang_co_ban": string
+    "can_lam_sang_co_ban": string,
+    "can_lam_sang": [
+      {
+        "ten": string,
+        "ket_qua": string,
+        "don_vi": string,
+        "khoang_tham_chieu": string,
+        "bat_thuong": true|false,
+        "huu_ich": string
+      }
+    ]
   },
   "rubric": {
     "clinical_context": "Ca bệnh test kỹ năng gì",
@@ -811,7 +847,24 @@ NHIỆM VỤ: Tạo ca lâm sàng + rubric đánh giá nội bộ. Trả về JS
 }
 
 TUYỆT ĐỐI KHÔNG để lộ chẩn đoán trong phần "patient".
-Tự kiểm tra tính nhất quán. Set consistent=false nếu có mâu thuẫn.`;
+Tự kiểm tra tính nhất quán. Set consistent=false nếu có mâu thuẫn.
+
+═══ QUY TẮC TRƯỜNG "can_lam_sang" (BẮT BUỘC) ═══
+Đây là danh sách máy — để học viên tự biết chỉ số nào BẤT THƯỜNG.
+
+• "ten": tên xét nghiệm đầy đủ, VD "WBC (bạch cầu)", "Hb (hemoglobin)", "Cr (creatinin)", "CRP", "AST", "HbA1c"
+• "ket_qua": chỉ SỐ giá trị hoặc kết quả quan trọng. VD "15,2", "12,8", "Dương tính", "Âm tính". TUYỆT ĐỐI KHÔNG viết kèm chú thích trong này
+• "don_vi": đơn vị, VD "10^9/L", "g/dL", "µmol/L", "mg/L", "U/L", "%"
+• "khoang_tham_chieu": khoảng tham chiếu của người lớn KHOẺ MẠNH. VD "4,0 – 10,0", "13,0 – 17,0", "< 5,0", "0 – 8,0", "0 – 40"
+• "bat_thuong": true nếu kết quả NẰM NGOÀI khoảng tham chiếu, false nếu trong khoảng
+• "huu_ich": 1 câu ngắn — vì sao chỉ số này quan trọng với ca bệnh này, HOẶC bệnh lý nào nó gợi ý. VD "Gợi ý nhiễm khuẩn vùng", "Theo dõi chức năng thận khi dùng kháng sinh"
+
+Quy tắc:
+- 5–10 chỉ số, chọn đúng các xét nghiệm quan trọng nhất cho chẩn đoán phân biệt ca này
+- CẢ CHỈ SỐ BÌNH THƯỜNG cũng phải có mặt (giá trị đúng tên thường) — để học viên tập so sánh
+- Khoảng tham chiếu phải ĐÚNG với quy chuẩn Việt Nam/định chuẩn lâm sàng thông dụng. KHÔNG bịa khoảng vô lý
+- KHÔNG để lộ chẩn đoán trong "huu_ich" (viết theo kiểu "gợi ý...", "theo dõi...", không viết thẳng tên bệnh đáp án)
+• "can_lam_sang_co_ban": giữ lại như bản tóm tắt dạng text 1–2 dòng (dùng để in/đọc nhanh), không bắt buộc chi tiết`;
 
         const EVAL_SYSTEM_PROMPT = `Bạn là clinical evaluation engine — đánh giá cấu trúc khắt khe, không khoan nhượng với sự mơ hồ và thiếu cụ thể.
 
@@ -2166,6 +2219,14 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                     for (const f of required) {
                         if (parsed.patient[f] == null || parsed.patient[f] === '') throw new Error(`Thiếu trường: ${f}`);
                     }
+                    // can_lam_sang (bảng có tham chiếu) là tuỳ chọn — chỉ cần >= 2 dòng hợp lệ
+                    if (Array.isArray(parsed.patient.can_lam_sang)) {
+                        parsed.patient.can_lam_sang = parsed.patient.can_lam_sang.filter(
+                            r => r && r.ten && r.ket_qua != null && String(r.ket_qua).trim() !== ''
+                        );
+                    } else {
+                        parsed.patient.can_lam_sang = [];
+                    }
                     if (parsed.validation?.consistent === false && attempt < 2) {
                         console.warn(`Attempt ${attempt+1} failed validation:`, parsed.validation.issues);
                         await new Promise(r => setTimeout(r, 800)); continue;
@@ -2192,6 +2253,93 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         }
 
         // =========================================================
+        // RENDER LABS TABLE — có giá trị tiêu chuẩn + đánh dấu bất thường
+        // =========================================================
+        let labsRefVisible = true;
+
+        function toggleLabsRef() {
+            labsRefVisible = !labsRefVisible;
+            const btn = $('btn-toggle-labs');
+            btn.querySelector('span').textContent = labsRefVisible ? 'Ẩn giá trị tiêu chuẩn' : 'Hiện giá trị tiêu chuẩn';
+            btn.querySelector('i').className = labsRefVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
+            $('labs-table-wrap').classList.toggle('hidden', !labsRefVisible);
+            $('pt-labs').classList.toggle('hidden', labsRefVisible);
+        }
+
+        // So sánh kết quả số với khoảng tham chiếu để suy ra H (cao) / T (thấp)
+        function inferAbnormalDirection(value, ref) {
+            const num = parseFloat(String(value).replace(',', '.'));
+            if (isNaN(num)) return null;
+            const nums = String(ref).match(/\d+(?:[.,]\d+)?/g);
+            if (!nums || nums.length < 2) return null;
+            const vals = nums.map(s => parseFloat(s.replace(',', '.'))).filter(n => !isNaN(n));
+            if (vals.length < 2) return null;
+            const lo = Math.min(vals[0], vals[1]);
+            const hi = Math.max(vals[0], vals[1]);
+            if (num > hi) return 'high';
+            if (num < lo) return 'low';
+            return null;
+        }
+
+        function renderLabsTable() {
+            const rows = Array.isArray(currentCaseData?.can_lam_sang) ? currentCaseData.can_lam_sang : [];
+            const tbody = $('labs-table-body');
+            const wrap  = $('labs-table-wrap');
+            const badge = $('labs-badge');
+            const btn   = $('btn-toggle-labs');
+
+            if (rows.length === 0) {
+                wrap.classList.add('hidden');
+                badge.classList.add('hidden');
+                btn.classList.add('hidden');
+                $('pt-labs').classList.remove('hidden');
+                return;
+            }
+
+            let abnormalCount = 0;
+            tbody.innerHTML = rows.map(r => {
+                const val   = String(r.ket_qua ?? '').trim();
+                const unit  = String(r.don_vi ?? '').trim();
+                const ref   = String(r.khoang_tham_chieu ?? '').trim() || '—';
+                const isAb  = r.bat_thuong === true;
+                const dir   = isAb ? inferAbnormalDirection(val, ref) : null;
+                if (isAb) abnormalCount++;
+
+                const valCls   = isAb ? 'font-bold text-rose-600' : 'text-slate-700';
+                const flag     = isAb
+                    ? `<span class="inline-block px-1.5 py-0.5 rounded font-bold text-[10px] ${dir === 'low' ? 'bg-blue-100 text-blue-600' : 'bg-rose-100 text-rose-600'}">${dir === 'low' ? 'T' : 'H'}</span>`
+                    : '<span class="text-slate-300 text-[10px]">–</span>';
+
+                return `<tr class="border-t border-slate-100 hover:bg-slate-50/60">
+                    <td class="px-2.5 py-1.5 text-slate-600">
+                        ${r.ten}${r.huu_ich ? `<i class="fas fa-circle-question ml-1 text-slate-300 text-[10px]" title="${String(r.huu_ich).replace(/"/g, '&quot;')}"></i>` : ''}
+                    </td>
+                    <td class="px-2.5 py-1.5 text-right ${valCls}">${val}${unit ? ` <span class="font-normal text-slate-400 text-[10px]">${unit}</span>` : ''}</td>
+                    <td class="px-2.5 py-1.5 text-slate-400">${ref}</td>
+                    <td class="px-2.5 py-1.5 text-center">${flag}</td>
+                </tr>`;
+            }).join('');
+
+            // Badge tổng số chỉ số bất thường
+            if (abnormalCount > 0) {
+                badge.textContent = `${abnormalCount}/${rows.length} bất thường`;
+                badge.classList.remove('hidden');
+            } else {
+                badge.textContent = 'Tất cả bình thường';
+                badge.className   = 'hidden text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 font-bold';
+                badge.classList.remove('hidden');
+            }
+
+            // Khôi phục trạng thái toggle
+            btn.classList.remove('hidden');
+            btn.classList.add('inline-flex');
+            $('btn-toggle-labs').querySelector('span').textContent = labsRefVisible ? 'Ẩn giá trị tiêu chuẩn' : 'Hiện giá trị tiêu chuẩn';
+            $('btn-toggle-labs').querySelector('i').className   = labsRefVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
+            wrap.classList.toggle('hidden', !labsRefVisible);
+            $('pt-labs').classList.toggle('hidden', labsRefVisible);
+        }
+
+        // =========================================================
         // RENDER PATIENT
         // =========================================================
         function renderPatientCase() {
@@ -2203,7 +2351,16 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
             $('pt-history').innerText = currentCaseData.benh_su;
             $('pt-past').innerText    = currentCaseData.tien_su;
             $('pt-exam').innerText    = currentCaseData.kham_lam_sang;
+            // Reset trạng thái bảng labs trước (phải chạy trước renderLabsTable)
+            $('pt-labs').classList.remove('hidden');
+            $('labs-table-wrap').classList.add('hidden');
+            $('btn-toggle-labs').classList.add('hidden');
+            $('btn-toggle-labs').classList.remove('inline-flex');
+            $('labs-badge').classList.add('hidden');
+            labsRefVisible = true;
+
             $('pt-labs').innerText    = currentCaseData.can_lam_sang_co_ban;
+            renderLabsTable();
 
             // Placeholder + label theo chế độ học
             const wsTitle = document.querySelector('#doctor-workspace h3');
@@ -2818,6 +2975,7 @@ ${DIFFERENTIAL_FEEDBACK_SECTION}
         $('btn-similar').addEventListener('click', loadSimilarCases);
         $('btn-reveal').addEventListener('click', revealAnswer);
         $('btn-open-stats').addEventListener('click', openStats);
+        $('btn-toggle-labs').addEventListener('click', toggleLabsRef);
         $('btn-close-stats').addEventListener('click', () => $('modal-stats').classList.add('hidden'));
         $('modal-stats').addEventListener('click', e => { if (e.target === $('modal-stats')) $('modal-stats').classList.add('hidden'); });
         elFollowupInput.addEventListener('keydown', e => {
