@@ -42,6 +42,11 @@
         .topic-btn.active { background-color: #0284c7 !important; color: white !important; border-color: #0284c7 !important; box-shadow: 0 2px 8px rgba(2,132,199,0.35); }
         .diff-btn { transition: all 0.15s ease; }
         .diff-btn:hover { transform: translateY(-1px); }
+        .mode-btn { transition: all 0.15s ease; }
+        .mode-btn:hover { transform: translateY(-1px); }
+        .tool-btn { transition: all 0.15s ease; }
+        .tool-btn:hover:not(:disabled) { transform: translateY(-1px); }
+        .tool-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         #followup-history > div:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
         .overlay { background: rgba(0,0,0,0.45); backdrop-filter: blur(2px); }
     </style>
@@ -109,6 +114,9 @@
             <button id="btn-open-lab-ref" class="bg-teal-700 hover:bg-teal-600 text-teal-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center text-sm" title="Tra cứu chỉ số cận lâm sàng">
                 <i class="fas fa-flask mr-1.5"></i> Tra cứu CLS
             </button>
+            <button id="btn-open-stats" class="bg-indigo-700 hover:bg-indigo-600 text-indigo-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center text-sm" title="Thống kê học tập">
+                <i class="fas fa-chart-bar mr-1.5"></i> Thống kê
+            </button>
             <!-- Admin button (chỉ hiện cho admin) -->
             <button id="btn-open-admin" class="hidden bg-amber-600 hover:bg-amber-500 text-white w-8 h-8 rounded-md flex items-center justify-center transition-colors" title="Quản lý người dùng">
                 <i class="fas fa-users-cog"></i>
@@ -137,7 +145,14 @@
                         <i class="fas fa-stethoscope text-2xl text-sky-600"></i>
                     </div>
                     <h2 class="text-lg font-bold text-slate-700">Clinical Simulator</h2>
-                    <p class="text-slate-500 text-xs mt-1">Chọn chuyên khoa &amp; độ khó, rồi bắt đầu khám bệnh.</p>
+                    <p class="text-slate-500 text-xs mt-1">Chọn chế độ học, chuyên khoa &amp; độ khó, rồi bắt đầu khám bệnh.</p>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                        <i class="fas fa-graduation-cap mr-1 text-sky-500"></i> Chế độ học
+                    </p>
+                    <div class="grid grid-cols-2 gap-1.5" id="learning-mode-grid"></div>
+                    <div id="learning-mode-desc" class="mt-2 p-2.5 bg-slate-50 rounded-lg text-xs text-slate-500 min-h-[38px] leading-relaxed"></div>
                 </div>
                 <div>
                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
@@ -150,11 +165,11 @@
                             placeholder="VD: Da liễu, Cơ xương khớp, Tâm thần...">
                     </div>
                 </div>
-                <div>
+                <div id="difficulty-block">
                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                         <i class="fas fa-signal mr-1 text-sky-500"></i> Độ khó
                     </p>
-                    <div class="grid grid-cols-4 gap-1.5" id="difficulty-grid"></div>
+                    <div class="grid grid-cols-5 gap-1.5" id="difficulty-grid"></div>
                     <div id="difficulty-desc" class="mt-2 p-2.5 bg-slate-50 rounded-lg text-xs text-slate-500 min-h-[38px] leading-relaxed"></div>
                 </div>
                 <button id="btn-start" class="w-full bg-sky-600 hover:bg-sky-700 active:scale-95 text-white py-3 rounded-lg font-semibold transition-all shadow-md flex items-center justify-center gap-2">
@@ -221,6 +236,20 @@
                 <textarea id="doctor-input"
                     class="w-full min-h-[220px] p-4 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y text-slate-700 placeholder-slate-400 text-sm"
                     placeholder="- Chẩn đoán sơ bộ: ...&#10;- Chẩn đoán phân biệt: ...&#10;- Cận lâm sàng đề nghị: ...&#10;- Hướng điều trị ban đầu: ..."></textarea>
+                <!-- Tools: Gợi ý / Case tương tự / Xem đáp án -->
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <button id="btn-hint" class="tool-btn bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
+                        <i class="fas fa-lightbulb mr-1"></i> Gợi ý <span id="hint-count" class="opacity-70">(0/3)</span>
+                    </button>
+                    <button id="btn-similar" class="tool-btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
+                        <i class="fas fa-exchange-alt mr-1"></i> Case tương tự
+                    </button>
+                    <button id="btn-reveal" class="tool-btn bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
+                        <i class="fas fa-eye mr-1"></i> Xem đáp án
+                    </button>
+                    <div id="tool-spinner" class="spinner hidden ml-1" style="width:14px;height:14px;border-width:2px;"></div>
+                </div>
+                <div id="tool-panel" class="hidden mt-3 p-3.5 rounded-lg border text-sm leading-relaxed"></div>
                 <div class="mt-3 flex justify-end">
                     <button id="btn-submit" class="bg-teal-600 hover:bg-teal-500 active:scale-95 text-white px-5 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 shadow-sm">
                         <span id="submit-text"><i class="fas fa-paper-plane mr-1"></i> Gửi đánh giá</span>
@@ -236,6 +265,7 @@
                         <i class="fas fa-check-circle mr-2"></i> Đánh Giá Lâm Sàng
                     </h3>
                     <div class="flex items-center gap-2">
+                        <span id="verdict-badge" class="hidden px-2.5 py-1 rounded-full text-xs font-bold"></span>
                         <span id="save-status" class="text-xs text-slate-400"></span>
                         <!-- Double Check button — only shown when grading model is configured -->
                         <button id="btn-double-check" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-200 transition-all"
@@ -308,6 +338,23 @@
 
         </div>
     </main>
+
+    <!-- ===== STATS MODAL ===== -->
+    <div id="modal-stats" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh]">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-slate-50">
+                <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-chart-bar text-indigo-500"></i> Thống kê học tập
+                </h2>
+                <button id="btn-close-stats" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <div id="stats-content" class="flex-1 overflow-y-auto p-6 text-sm">
+                <p class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải thống kê...</p>
+            </div>
+        </div>
+    </div>
 
     <!-- ===== SETTINGS MODAL ===== -->
     <div id="modal-settings" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center p-4">
@@ -686,6 +733,27 @@
         // =========================================================
         // PROMPT TEMPLATES
         // =========================================================
+
+        // ── CHẾ ĐỘ CƠ BẢN (Y2–Y3) — dùng chung cho case generation ──
+        const BASIC_MODE_PROMPT = `
+CHẾ ĐỘ CƠ BẢN (Y2–Y3) — yêu cầu đặc thù, ưu tiên cao hơn mọi hướng dẫn khác về độ khó:
+• Ngữ cảnh đối tượng: sinh viên Y2–Y3, đang học lâm sàng cơ bản.
+• Độ đa dạng bệnh TỐI ĐA: mỗi case phải luân chuyển qua dải "rất phổ biến → phổ biến → trung bình → hiếm → rất hiếm". Khi chọn bệnh, ưu tiên bệnh CHƯA xuất hiện gần đây. Trong trường patient có thêm trường "disease_tier": "rất phổ biến|phổ biến|trung bình|hiếm|rất hiếm".
+• Độ khó chẩn đoán: KHÔNG được giảm — triệu chứng cốt lõi phải đủ đặc hiệu để học viên suy luận (cần phân biệt 2–4 chẩn đoán), data không đầy cố tình để buộc học viên nhận ra thiếu sót.
+• Ngữ cảnh bệnh nhân: RÚT GỌN — "benh_su" 2–3 câu, "tien_su" 1 câu, "kham_lam_sang" chỉ dấu hiệu thực thể quan trọng, "can_lam_sang_co_ban" chỉ vài xét nghiệm cơ bản có sẵn.
+• Thêm trường "teaching_notes" (string): giải thích ngắn gọn cơ chế bệnh sinh (pathophysiology) và cách tiếp cận chẩn đoán từng bước — ở mức độ Y2–Y3 có thể hiểu được.
+• Thêm trường "differential" (array of 3–5 objects) — ĐÂY LÀ TRỌNG TÂM:
+  { "disease": "tên bệnh", "similar": "triệu chứng/dấu hiệu GIỐNG ca này", "ruled_out_by": "1–2 chi tiết CHỈ GẶP ở bệnh đó hoặc THIẾU ở bệnh này — tức là lý do loại trừ", "prevalence": "common|uncommon|rare" }
+  → Mỗi phần tử phải là bệnh CÓ TRIỆU CHỨNG TƯƠNG TỰ với chẩn đoán đúng, và "ruled_out_by" phải nêu chi tiết phân biệt cụ thể, không chung chung.`;
+
+        // ── Chẩn đoán phân biệt — thêm vào FEEDBACK (mọi chế độ) ──
+        const DIFFERENTIAL_FEEDBACK_SECTION = `
+### 🔀 Chẩn đoán phân biệt
+[Từ rubric.diagnosis.important_differentials (hoặc trường "differential" nếu có), liệt kê 3–4 bệnh GIỐNG ca này theo format:
+**Bệnh X** — Giống: [triệu chứng/dấu hiệu tương tự]. Loại trừ: [chi tiết cụ thể trong ca này khiến không phải đáp án].
+Bắt buộc có chi tiết phân biệt CỤ THỂ dựa trên dữ kiện của ca, không viết chung chung ("không có triệu chứng đó" là chưa đủ — phải nêu triệu chứng/thông số nào không khớp).]
+`;
+
         const CASE_SYSTEM_PROMPT = `Bạn là giáo sư y khoa chuyên tạo ca lâm sàng cho mục đích giảng dạy.
 
 NHIỆM VỤ: Tạo ca lâm sàng + rubric đánh giá nội bộ. Trả về JSON theo schema sau (không kèm markdown):
@@ -749,6 +817,11 @@ Tự kiểm tra tính nhất quán. Set consistent=false nếu có mâu thuẫn.
 
 NHIỆM VỤ: Đánh giá bài làm học viên dựa trên rubric nội bộ. Xuất JSON đánh giá có cấu trúc.
 
+QUY TẮC XẾP LOẠI CHÍNH (overall) — chẩn đoán SAI là quyết định chính:
+• "correct": học viên đưa ra đúng đáp án, hoặc đúng mức hoàn toàn (gần đúng nhưng không ảnh hưởng điều trị)
+• "close": chẩn đoán gần đúng (đúng nhóm bệnh, sai phân nhóm; hoặc đúng 1 trong 2 chẩn đoán chính; hoặc có sai sót nhỏ không nguy hiểm)
+• "incorrect": sai chẩn đoán, hoặc thiếu chẩn đoán chính, hoặc có sai sót nguy hiểm
+
 NGUYÊN TẮC BẮT BUỘC:
 ① CRITICAL_ERROR: lỗi thực sự nguy hiểm có thể gây hại bệnh nhân, hoặc chẩn đoán sai hoàn toàn ngược với dữ kiện
 ② REQUIRED_OMISSION: bỏ sót bất kỳ item nào trong rubric.investigations.required / management.required / safety.critical_omissions — kể cả khi phần còn lại làm tốt
@@ -766,9 +839,13 @@ QUY TẮC SCORING (khắt khe):
 - "partial": chỉ đúng một phần, bỏ sót đáng kể, hoặc reasoning yếu
 - "weak": sai hoặc quá thiếu sót, dù không đến mức critical_error
 
+LƯU Ý: "overall" KHÔNG phải số điểm — chỉ nhận 1 trong 3 giá trị: correct | close | incorrect.
+
 OUTPUT JSON:
 {
-  "overall": "excellent|good|adequate|weak|fail",
+  "overall": "correct|close|incorrect",
+  "verdict_reason": "1 câu, nói ngắn gọn vì sao đạt mức này",
+  "diagnosis_match": "exact_chdx|partially_correct|wrong_diagnosis",
   "dimensions": {
     "diagnosis":      {"score": "excellent|strong|adequate|partial|weak", "comment": "..."},
     "severity":       {"score": "excellent|strong|adequate|partial|weak", "comment": "..."},
@@ -817,7 +894,7 @@ Yêu cầu bắt buộc trong phần giảng dạy:
 FORMAT MARKDOWN:
 
 ### 🏁 Nhận xét chung
-[Đánh giá tổng thể ngắn gọn từ structured evaluation. Trung thực, không khen vô cớ.]
+[Đánh giá tổng thể ngắn gọn từ structured evaluation. Trung thực, không khen vô cớ. Nêu rõ mức độ chẩn đoán: Đúng / Gần đúng / Chưa đúng.]
 
 ### ✅ Điểm làm tốt
 [Chỉ những điểm thực sự đúng. Nếu không có: "Chưa có điểm nổi bật."]
@@ -838,6 +915,15 @@ FORMAT MARKDOWN:
 - Phân độ nặng: áp dụng các thang điểm phù hợp, phân tích từng tiêu chí
 - Tiêu chí cần hội chẩn ICU/chuyên khoa nếu liên quan
 - Các bẫy lâm sàng thường gặp trong ca này]
+
+### 🔀 Chẩn đoán phân biệt
+[Liệt kê 2-4 chẩn đoán phân biệt quan trọng nhất — bệnh KHÁC có triệu chứng TƯƠNG TỰ ca này nhưng KHÔNG phải đáp án. Với mỗi chẩn đoán, format:
+
+**1. [Tên bệnh phân biệt]**
+- Tương tự: [triệu chứng/dấu hiệu giống ca này]
+- Loại trừ bởi: [1-2 chi tiết CỤ THỂ trong ca này chứng minh bệnh này không phải đáp án — nêu rõ chi tiết nào]
+
+Bắt buộc: "Loại trừ bởi" phải trích dữ kiện CỤ THỂ từ ca (số liệu, triệu chứng, kết quả xét nghiệm), không chung chung. Đây là phần GIẢNG DẠY QUAN TRỌNG — giúp học viên thấy cách phân biệt các bệnh giống nhau.]
 
 ### 🔬 Cận lâm sàng — chỉ định cụ thể
 [Phân tích từng xét nghiệm/thăm dò với chỉ định rõ trong bối cảnh ca này:
@@ -882,6 +968,39 @@ NGUYÊN TẮC CỐT LÕI:
 Tuyệt đối KHÔNG dùng LaTeX, ký hiệu toán học, hay cú pháp $...$. Viết số và đơn vị hoàn toàn bằng text thuần.
 ✅ Đúng: "Ceftriaxone 2g IV x 1 lần/ngày", "18G", "500 mL", "100 mL/giờ", "3-5 ngày"
 ❌ Sai: "$2\text{ g}$", "$18\text{G}$", "$500\text{ mL}$", "$3-5$ ngày"`;
+
+        // ── PROMPT: GỢI Ý (Hint) — 3 cấp độ ──
+        const HINT_SYSTEM_PROMPT = `Bạn là giáo sư y khoa đang gợi ý cho sinh viên Y2–Y3 giải ca lâm sàng.
+
+NHIỆM VỤ: Đưa gợi ý theo cấp độ đã yêu cầu, KHÔNG tiết lộ chẩn đoán trừ khi được yêu cầu cấp 3.
+
+CẤP ĐỘ GỢI Ý:
+• Cấp 1 (khởi động): Gợi ý hướng tiếp cận — nhóm bệnh nào cần nghĩ đến dựa trên triệu chứng chính. Không nói tên bệnh.
+• Cấp 2 (định hướng): Gợi ý 2-3 chẩn đoán phân biệt cần cân nhắc + dấu hiệu nào quan trọng để phân biệt. Không nói đáp án.
+• Cấp 3 (gần đáp án): Nêu rõ chẩn đoán có khả năng cao nhất + lý do ngắn gọn.
+
+Trả về JSON: { "level": 1|2|3, "hint": "nội dung gợi ý" }`;
+
+        // ── PROMPT: CASE TƯƠNG TỰ — tạo ca mới cùng nhóm bệnh ──
+        const SIMILAR_CASE_PROMPT = `Bạn là giáo sư y khoa. Sinh viên vừa làm xong một ca lâm sàng và muốn luyện thêm các case TƯƠNG TỰ.
+
+NHIỆM VỤ: Tạo 2-3 ca lâm sàng MỚI, cùng nhóm bệnh/chuyên khoa với ca hiện tại nhưng KHÔNG phải cùng bệnh. Mỗi ca phải:
+- Có triệu chứng TƯƠNG TỰ ca hiện tại (để sinh viên so sánh)
+- Có 1-2 chi tiết PHÂN BIỆT rõ ràng (để sinh viên học cách phân biệt)
+- Có độ khó tương đương ca hiện tại
+- Có đủ thông tin để chẩn đoán: triệu chứng, tiền sử, khám, cận lâm sàng
+
+Trả về JSON:
+{
+  "cases": [
+    {
+      "title": "Ca 1: [tên bệnh]",
+      "symptoms": "triệu chứng ngắn gọn",
+      "key_differentiator": "chi tiết phân biệt với ca hiện tại",
+      "difficulty": "dễ|trung bình|khó"
+    }
+  ]
+}`;
 
         const FOLLOWUP_SYSTEM_PROMPT = `Bạn là giảng viên y khoa đang giải đáp thắc mắc sau khi đã đánh giá bài làm.
 
@@ -937,6 +1056,18 @@ Lưu ý: Nếu AI trước chấm hoàn hảo, hãy khen ngợi ngắn gọn. Tr
             { id: 'obstetrics',  emoji: '🤰',  label: 'Sản - Phụ khoa',   prompt: 'Sản - Phụ khoa (Obstetrics & Gynecology)' },
             { id: 'custom',      emoji: '✍️', label: 'Tùy chỉnh',        prompt: '' },
         ];
+
+        // =========================================================
+        // BASIC MODE (Y2-Y3) DIFFICULTY
+        // =========================================================
+        const BASIC_DIFFICULTY = {
+            id: 'basic', label: 'Cơ bản', sub: 'Y2–Y3',
+            active: 'bg-teal-500 text-white border-teal-500 shadow',
+            idle:   'bg-teal-50 text-teal-700 border-teal-200 hover:border-teal-400',
+            badge:  'bg-teal-100 text-teal-700',
+            desc:   '🟢 Mode Cơ bản (Y2–Y3): triệu chứng ngắn gọn, đa dạng bệnh tối đa (phổ biến → hiếm), độ khó chẩn đoán ngang hoặc hơn các mode khác.',
+            prompt: BASIC_MODE_PROMPT
+        };
 
         const DIFFICULTIES = [
             {
@@ -1006,6 +1137,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         // =========================================================
         let selectedTopicId   = 'random';
         let selectedDiffId    = 'medium';
+        let basicMode         = false;
         let currentCaseData   = null;
         let hiddenRubric      = null;
         let structuredEval    = null;
@@ -1016,6 +1148,9 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         let doubleCheckReport = null;
         let followUpHistory   = [];
         let followUpRemaining = 3;
+        let hintsUsed         = 0;
+        let answerRevealed    = false;
+        let similarCaseText   = '';
 
         // =========================================================
         // DOM
@@ -1191,6 +1326,26 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         }
 
         // =========================================================
+        // VERDICT — mức đánh giá chẩn đoán (thay thế số điểm)
+        // =========================================================
+        const VERDICTS = {
+            correct:   { label: 'Đúng',     emoji: '✅', cls: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
+            close:     { label: 'Gần đúng', emoji: '🟡', cls: 'bg-amber-100 text-amber-700 border border-amber-200' },
+            incorrect: { label: 'Chưa đúng', emoji: '🔴', cls: 'bg-rose-100 text-rose-700 border border-rose-200' }
+        };
+        function verdictMeta(v) {
+            return VERDICTS[v] || VERDICTS.incorrect;
+        }
+        function renderVerdictBadge(v) {
+            const b = $('verdict-badge');
+            if (!b) return;
+            const m = verdictMeta(v);
+            b.className = `px-2.5 py-1 rounded-full text-xs font-bold ${m.cls}`;
+            b.innerHTML = `${m.emoji} ${m.label}`;
+            b.classList.remove('hidden');
+        }
+
+        // =========================================================
         // SAVE CURRENT CASE TO SUPABASE
         // =========================================================
         async function saveCurrentCase() {
@@ -1206,6 +1361,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
                     topic:     currentTopicData?.label  || '',
                     difficulty: currentDiffData?.id     || 'medium',
                     score:     structuredEval?.score     || null,
+                    verdict:   structuredEval?.overall   || null,
                     case_data: {
                         topic_id:          currentTopicData?.id    || 'random',
                         topic_label:       currentTopicData?.label || '',
@@ -1214,6 +1370,10 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
                         difficulty_label:  currentDiffData?.label  || '',
                         difficulty_sub:    currentDiffData?.sub    || '',
                         difficulty_badge:  currentDiffData?.badge  || '',
+                        basic_mode:       basicMode,
+                        hints_used:       hintsUsed,
+                        answer_revealed:  answerRevealed,
+                        verdict:          structuredEval?.overall || null,
                         patient:           currentCaseData,
                         rubric:            hiddenRubric,
                         structured_eval:   structuredEval,
@@ -1256,7 +1416,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             try {
                 const { data: cases, error } = await sbClient
                     .from('cases')
-                    .select('id, created_at, topic, difficulty, score, case_data')
+                    .select('id, created_at, topic, difficulty, score, verdict, case_data')
                     .order('created_at', { ascending: false })
                     .limit(100);
 
@@ -1293,7 +1453,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
                                     <div class="text-xs text-slate-500">${cd.topic_label || c.topic || ''} · ${cd.difficulty_label || c.difficulty || ''}</div>
                                     <div class="flex items-center gap-2 mt-0.5">
                                         <span class="text-xs text-slate-400">${date}</span>
-                                        ${c.score != null ? `<span class="text-xs font-semibold ${c.score >= 70 ? 'text-emerald-600' : c.score >= 50 ? 'text-amber-600' : 'text-red-500'}">${c.score}/100</span>` : ''}
+                                        ${c.verdict ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full ${verdictMeta(c.verdict).cls}">${verdictMeta(c.verdict).label}</span>` : ''}
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -1352,7 +1512,14 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
 
             // Restore topic/diff data
             currentTopicData = TOPICS.find(t => t.id === c.topic_id) || TOPICS[0];
-            currentDiffData  = DIFFICULTIES.find(d => d.id === c.difficulty_id) || DIFFICULTIES[1];
+            currentDiffData  = [BASIC_DIFFICULTY, ...DIFFICULTIES].find(d => d.id === c.difficulty_id) || DIFFICULTIES[1];
+            basicMode        = c.basic_mode === true || c.difficulty_id === 'basic';
+            selectedDiffId   = currentDiffData.id;
+            hintsUsed        = c.hints_used || 0;
+            answerRevealed   = c.answer_revealed === true;
+            similarCaseText  = '';
+            updateHintUI();
+            $('tool-panel').classList.add('hidden');
             // Override badge if saved
             if (c.difficulty_badge) currentDiffData = { ...currentDiffData, badge: c.difficulty_badge };
 
@@ -1364,6 +1531,7 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
 
             // Render evaluation
             elEvalContent.innerHTML = marked.parse(initialEvaluation);
+            renderVerdictBadge(structuredEval?.overall || c.verdict);
             elEvalResult.classList.remove('hidden');
             $('save-status').textContent = '📂 Từ lịch sử';
             $('save-status').className   = 'text-xs text-violet-500';
@@ -1620,6 +1788,231 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
         }
 
         // =========================================================
+        // TOOLS: GỢI Ý / XEM ĐÁP ÁN / CASE TƯƠNG TỰ
+        // =========================================================
+        const MAX_HINTS = 3;
+
+        function updateHintUI() {
+            const el = $('hint-count');
+            if (el) el.textContent = `(${hintsUsed}/${MAX_HINTS})`;
+        }
+
+        function showToolPanel(kind, html) {
+            const panel = $('tool-panel');
+            panel.classList.remove('hidden');
+            panel.className = `mt-3 p-3.5 rounded-lg border text-sm leading-relaxed ${kind}`;
+            panel.innerHTML = html;
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        async function requestHint() {
+            if (!currentCaseData || !hiddenRubric) return;
+            if (hintsUsed >= MAX_HINTS) { showToast('Đã dùng hết 3 gợi ý cho ca này.'); return; }
+
+            const level = hintsUsed + 1;
+            $('tool-spinner').classList.remove('hidden');
+            $('btn-hint').disabled = true;
+
+            try {
+                const msg = `CA BỆNH:\n${JSON.stringify(currentCaseData, null, 2)}\n\nRUBRIC NỘI BỘ:\n${JSON.stringify(hiddenRubric, null, 2)}\n\nCấp độ gợi ý: ${level}`;
+                const data = await apiCall(
+                    [{ role: 'system', content: HINT_SYSTEM_PROMPT }, { role: 'user', content: msg }],
+                    { temperature: 0.5, response_format: { type: 'json_object' } }
+                );
+                const raw = getResponseText(data);
+                if (!raw) throw new Error('Phản hồi rỗng');
+                const parsed = JSON.parse(raw);
+
+                hintsUsed++;
+                updateHintUI();
+                showToolPanel('bg-amber-50 border-amber-200', `
+                    <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-lightbulb mr-1"></i> Gợi ý cấp ${level}
+                    </p>
+                    <div class="text-slate-700">${marked.parse(parsed.hint || 'Không có gợi ý.')}</div>`);
+            } catch (e) {
+                console.error('Hint error:', e);
+                showToast('Lỗi khi tạo gợi ý: ' + e.message);
+            } finally {
+                $('tool-spinner').classList.add('hidden');
+                $('btn-hint').disabled = hintsUsed >= MAX_HINTS;
+            }
+        }
+
+        function revealAnswer() {
+            if (!currentCaseData || !hiddenRubric) return;
+            if (answerRevealed) { showToast('Đã xem đáp án rồi.'); return; }
+
+            const dx = hiddenRubric.primary_diagnosis || hiddenRubric.diagnosis?.required?.[0] || 'Chưa có';
+            const diffs = hiddenRubric.diagnosis?.important_differentials || [];
+            const teaching = currentCaseData.teaching_notes || '';
+            answerRevealed = true;
+
+            showToolPanel('bg-rose-50 border-rose-200', `
+                <p class="text-xs font-semibold text-rose-700 uppercase tracking-wider mb-1.5">
+                    <i class="fas fa-eye mr-1"></i> Đáp án
+                </p>
+                <div class="text-slate-700 space-y-2">
+                    <p><strong>Chẩn đoán:</strong> ${dx}</p>
+                    ${teaching ? `<p><strong>Cơ chế bệnh sinh:</strong> ${teaching}</p>` : ''}
+                    ${diffs.length ? `<p><strong>Chẩn đoán phân biệt:</strong> ${diffs.join(', ')}</p>` : ''}
+                </div>`);
+        }
+
+        async function loadSimilarCases() {
+            if (!currentCaseData || !hiddenRubric) return;
+
+            $('tool-spinner').classList.remove('hidden');
+            $('btn-similar').disabled = true;
+
+            try {
+                const msg = `CA BỆNH HIỆN TẠI:\n${JSON.stringify(currentCaseData, null, 2)}\n\nCHẨN ĐOÁN: ${hiddenRubric.primary_diagnosis || ''}\n\nTạo 2-3 case tương tự.`;
+                const data = await apiCall(
+                    [{ role: 'system', content: SIMILAR_CASE_PROMPT }, { role: 'user', content: msg }],
+                    { temperature: 0.8, response_format: { type: 'json_object' } }
+                );
+                const raw = getResponseText(data);
+                if (!raw) throw new Error('Phản hồi rỗng');
+                const parsed = JSON.parse(raw);
+
+                similarCaseText = (parsed.cases || []).map((c, i) =>
+                    `**${i + 1}. ${c.title || 'Ca ' + (i + 1)}**\n\n- Triệu chứng: ${c.symptoms || ''}\n- Điểm phân biệt: ${c.key_differentiator || ''}\n- Độ khó: ${c.difficulty || ''}`
+                ).join('\n\n');
+
+                showToolPanel('bg-sky-50 border-sky-200', `
+                    <p class="text-xs font-semibold text-sky-700 uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-exchange-alt mr-1"></i> Case tương tự — luyện thêm
+                    </p>
+                    <div class="markdown-body">${marked.parse(similarCaseText || 'Không có case nào.')}</div>`);
+            } catch (e) {
+                console.error('Similar cases error:', e);
+                showToast('Lỗi khi tạo case tương tự: ' + e.message);
+            } finally {
+                $('tool-spinner').classList.add('hidden');
+                $('btn-similar').disabled = false;
+            }
+        }
+
+        // =========================================================
+        // STATS
+        // =========================================================
+        async function openStats() {
+            $('modal-stats').classList.remove('hidden');
+            const content = $('stats-content');
+            content.innerHTML = '<p class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</p>';
+
+            if (!currentSession) {
+                content.innerHTML = '<p class="text-center text-slate-400 py-8">Vui lòng đăng nhập để xem thống kê.</p>';
+                return;
+            }
+
+            try {
+                const { data: cases, error } = await sbClient
+                    .from('cases')
+                    .select('id, created_at, topic, difficulty, score, verdict, case_data')
+                    .order('created_at', { ascending: false })
+                    .limit(200);
+
+                if (error) throw error;
+                if (!cases || cases.length === 0) {
+                    content.innerHTML = '<p class="text-center text-slate-400 py-8">Chưa có dữ liệu. Hãy làm vài ca lâm sàng trước!</p>';
+                    return;
+                }
+
+                const total = cases.length;
+                const scored = cases.filter(c => c.verdict != null);
+                const byVerdict = { correct: 0, close: 0, incorrect: 0 };
+                scored.forEach(c => { if (byVerdict[c.verdict] != null) byVerdict[c.verdict]++; });
+                const correctRate = scored.length
+                    ? Math.round((byVerdict.correct / scored.length) * 100) : 0;
+
+                // Phân bố theo chế độ học (basic = Mode Cơ bản Y2–Y3)
+                const byMode = { basic: 0, advanced: 0 };
+                const byDiff = {};
+                const byTopic = {};
+                cases.forEach(c => {
+                    const cd = c.case_data || {};
+                    const isBasic = cd.basic_mode === true || c.difficulty === 'basic';
+                    isBasic ? byMode.basic++ : byMode.advanced++;
+                    const d = isBasic ? 'Cơ bản (Y2–Y3)' : (c.difficulty || '—');
+                    byDiff[d] = (byDiff[d] || 0) + 1;
+                    const t = cd.topic_label || c.topic || 'Khác';
+                    byTopic[t] = (byTopic[t] || 0) + 1;
+                });
+
+                const rows = obj => Object.entries(obj)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([k, v]) => `<div class="flex justify-between text-xs py-0.5">
+                        <span class="text-slate-600">${k}</span>
+                        <span class="font-semibold text-slate-800">${v} ca</span></div>`).join('');
+
+                const recent = cases.slice(0, 6).map(c => {
+                    const isBasic = (c.case_data || {}).basic_mode === true || c.difficulty === 'basic';
+                    return `<li class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                        <span class="text-slate-600">${c.case_data?.topic_label || c.topic || '—'}
+                            <span class="text-slate-400">· ${isBasic ? 'Cơ bản' : (c.difficulty || '—')}</span></span>
+                        <span class="flex items-center gap-1.5 text-xs">
+                            ${c.verdict ? `<span class="font-bold px-1.5 py-0.5 rounded-full text-[10px] ${verdictMeta(c.verdict).cls}">${verdictMeta(c.verdict).label}</span>` : '<span class="text-slate-400">chưa chấm</span>'}
+                            <span class="text-slate-400">${new Date(c.created_at).toLocaleDateString('vi-VN')}</span>
+                        </span>
+                    </li>`;
+                }).join('');
+
+                const verdictRows = Object.entries(byVerdict).map(([k, v]) => {
+                    const m = verdictMeta(k);
+                    return `<div class="flex justify-between items-center text-xs py-0.5">
+                        <span class="${m.cls} px-2 py-0.5 rounded-full font-bold text-[10px]">${m.emoji} ${m.label}</span>
+                        <span class="font-semibold text-slate-800">${v} ca</span></div>`;
+                }).join('');
+
+                content.innerHTML = `
+                    <div class="grid grid-cols-3 gap-3 mb-5">
+                        <div class="bg-slate-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-slate-800">${total}</div>
+                            <div class="text-xs text-slate-500">Tổng ca</div>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-emerald-600">${correctRate}%</div>
+                            <div class="text-xs text-slate-500">Tỷ lệ đúng</div>
+                        </div>
+                        <div class="bg-slate-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-slate-800">${scored.length}</div>
+                            <div class="text-xs text-slate-500">Đã chấm</div>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 mb-4">
+                        <div class="text-xs font-semibold text-slate-700 mb-1.5">Phân bố đánh giá</div>
+                        ${verdictRows}
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-teal-50 rounded-lg p-3">
+                            <div class="text-xs font-semibold text-teal-700 mb-1">Cơ bản (Y2–Y3)</div>
+                            <div class="text-xl font-bold text-teal-800">${byMode.basic} ca</div>
+                        </div>
+                        <div class="bg-sky-50 rounded-lg p-3">
+                            <div class="text-xs font-semibold text-sky-700 mb-1">Nâng cao (Y4–Y6)</div>
+                            <div class="text-xl font-bold text-sky-800">${byMode.advanced} ca</div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-slate-700 text-sm mb-2">Theo độ khó</h4>
+                        <div class="space-y-0.5">${rows(byDiff)}</div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-slate-700 text-sm mb-2">Theo chuyên khoa</h4>
+                        <div class="space-y-0.5">${rows(byTopic)}</div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-slate-700 text-sm mb-2">Ca gần nhất</h4>
+                        <ul class="text-xs">${recent}</ul>
+                    </div>`;
+            } catch (e) {
+                console.error('Stats error:', e);
+                content.innerHTML = `<p class="text-center text-red-500 py-8">Lỗi: ${e.message}</p>`;
+            }
+        }
+
+        // =========================================================
         // UI RENDERERS
         // =========================================================
         function renderTopics() {
@@ -1639,22 +2032,67 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             });
         }
 
+        const LEARNING_MODES = [
+            {
+                id: 'basic', label: 'Cơ bản (Y2–Y3)', diffId: 'basic',
+                active: 'bg-teal-500 text-white border-teal-500 shadow',
+                idle:   'bg-teal-50 text-teal-700 border-teal-200 hover:border-teal-400',
+                desc:   '🟢 Y2–Y3 — Chỉ chấm CHẨN ĐOÁN. Triệu chứng ngắn gọn (3–5 triệu chứng chính), tiền sử/khám/CLS tối giản. Đa dạng bệnh TỐI ĐA (từ rất phổ biến đến rất hiếm), độ khó chẩn đoán ngang hoặc hơn các mode khác. Giải thích gồm: cơ chế bệnh sinh, cách tiếp cận, xét nghiệm, và CHẨN ĐOÁN PHÂN BIỆT chi tiết.'
+            },
+            {
+                id: 'advanced', label: 'Nâng cao (Y4–Y6)', diffId: null,
+                active: 'bg-sky-600 text-white border-sky-600 shadow',
+                idle:   'bg-sky-50 text-sky-700 border-sky-200 hover:border-sky-400',
+                desc:   '🔵 Y4–Y6 — Đầy đủ thông tin lâm sàng. Chấm toàn diện: chẩn đoán, phân độ nặng, cận lâm sàng, điều trị, an toàn người bệnh. 4 mức độ khó: Dễ → Cực khó.'
+            }
+        ];
+
+        function renderLearningModes() {
+            const grid = $('learning-mode-grid');
+            grid.innerHTML = '';
+            LEARNING_MODES.forEach(m => {
+                const btn = document.createElement('button');
+                const isOn = (m.id === 'basic') === basicMode;
+                btn.className = `mode-btn text-center rounded-lg border px-2 py-2.5 font-medium transition-all text-xs leading-tight
+                    ${isOn ? m.active : m.idle}`;
+                btn.innerHTML = m.label;
+                btn.addEventListener('click', () => {
+                    basicMode = m.id === 'basic';
+                    if (basicMode) {
+                        selectedDiffId = BASIC_DIFFICULTY.id;
+                    } else if (selectedDiffId === BASIC_DIFFICULTY.id) {
+                        // Chuyển sang Nâng cao → dùng mức độ khó mặc định
+                        selectedDiffId = 'medium';
+                    }
+                    renderLearningModes();
+                    renderDifficulties();
+                });
+                grid.appendChild(btn);
+            });
+            $('learning-mode-desc').textContent =
+                LEARNING_MODES.find(m => (m.id === 'basic') === basicMode).desc;
+        }
+
         function renderDifficulties() {
             const grid = $('difficulty-grid');
             grid.innerHTML = '';
-            DIFFICULTIES.forEach(d => {
+            // Mode Cơ bản (Y2–Y3) đứng đầu, còn lại giữ nguyên thứ tự
+            const list = [BASIC_DIFFICULTY, ...DIFFICULTIES];
+            list.forEach(d => {
                 const btn = document.createElement('button');
                 btn.className = `diff-btn text-center rounded-lg border px-1 py-2 font-medium transition-all
                     ${d.id === selectedDiffId ? d.active : d.idle}`;
                 btn.innerHTML = `<div class="text-sm font-semibold">${d.label}</div><div class="text-xs opacity-80 mt-0.5">${d.sub}</div>`;
                 btn.addEventListener('click', () => {
                     selectedDiffId = d.id;
+                    basicMode      = d.id === 'basic';
                     renderDifficulties();
-                    $('difficulty-desc').textContent = DIFFICULTIES.find(x => x.id === d.id).desc;
+                    $('difficulty-desc').textContent = d.desc;
                 });
                 grid.appendChild(btn);
             });
-            $('difficulty-desc').textContent = DIFFICULTIES.find(d => d.id === selectedDiffId).desc;
+            const current = list.find(d => d.id === selectedDiffId) || list[0];
+            $('difficulty-desc').textContent = current.desc;
         }
 
         // =========================================================
@@ -1684,9 +2122,20 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             doubleCheckReport = null;
             elBtnDoubleCheck.classList.add('hidden');
             elBtnShowReport.classList.add('hidden');
+            // Reset tool state
+            hintsUsed      = 0;
+            answerRevealed = false;
+            similarCaseText = '';
+            $('tool-panel').classList.add('hidden');
+            $('tool-panel').innerHTML = '';
+            updateHintUI();
+            $('btn-hint').disabled = false;
+            $('btn-similar').disabled = false;
 
             currentTopicData = TOPICS.find(t => t.id === selectedTopicId);
-            currentDiffData  = DIFFICULTIES.find(d => d.id === selectedDiffId);
+            currentDiffData  = [BASIC_DIFFICULTY, ...DIFFICULTIES].find(d => d.id === selectedDiffId)
+                           || BASIC_DIFFICULTY;
+            basicMode        = selectedDiffId === 'basic';
 
             const topicPrompt = selectedTopicId === 'custom'
                 ? `chủ đề: "${customText}"`
@@ -1695,6 +2144,8 @@ LƯU Ý: Bệnh phổ thông presentation phức tạp cũng đạt mức này.`
             const userPrompt = `Tạo ca lâm sàng trong lĩnh vực: ${topicPrompt}.
 
 ${currentDiffData.prompt}
+
+${basicMode ? BASIC_MODE_PROMPT : ''}
 
 Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có số liệu cụ thể, TUYỆT ĐỐI KHÔNG để lộ chẩn đoán trong "patient", rubric phản ánh đúng độ khó.`;
 
@@ -1754,6 +2205,23 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
             $('pt-exam').innerText    = currentCaseData.kham_lam_sang;
             $('pt-labs').innerText    = currentCaseData.can_lam_sang_co_ban;
 
+            // Placeholder + label theo chế độ học
+            const wsTitle = document.querySelector('#doctor-workspace h3');
+            if (wsTitle) {
+                wsTitle.innerHTML = basicMode
+                    ? '<i class="fas fa-user-md text-sky-600 mr-2"></i> Chẩn đoán của bạn'
+                    : '<i class="fas fa-user-md text-sky-600 mr-2"></i> Phân tích &amp; Hướng xử lý';
+            }
+            const wsHint = document.querySelector('#doctor-workspace p.text-xs');
+            if (wsHint) {
+                wsHint.textContent = basicMode
+                    ? 'Chỉ nhập chẩn đoán (có thể kèm chẩn đoán phân biệt). Không cần xét nghiệm/xử trí.'
+                    : 'Nhập chẩn đoán sơ bộ, xét nghiệm cần chỉ định, và phác đồ điều trị dự kiến.';
+            }
+            elDoctorInput.placeholder = basicMode
+                ? 'Chẩn đoán của bạn là gì?\n\nVD: Viêm phổi do phế cầu...'
+                : '- Chẩn đoán sơ bộ: ...\n- Chẩn đoán phân biệt: ...\n- Cận lâm sàng đề nghị: ...\n- Hướng điều trị ban đầu: ...';
+
             $('badge-topic').textContent = `${currentTopicData.emoji} ${currentTopicData.label}`;
             const bd = $('badge-diff');
             bd.textContent = `${currentDiffData.label} · ${currentDiffData.sub}`;
@@ -1765,6 +2233,9 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
 
             // Bắt đầu bấm giờ từ lúc ca bệnh hiện ra
             startCaseTimer();
+            updateHintUI();
+            $('btn-hint').disabled = false;
+            $('btn-similar').disabled = false;
             elDoctorInput.focus();
         }
 
@@ -1800,8 +2271,24 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                 // STEP 2: Markdown Feedback (with judge review)
                 $('submit-text').innerText = 'Đang tạo nhận xét (2/2)...';
                 const feedbackMsg = `CA BỆNH:\n${JSON.stringify(currentCaseData, null, 2)}\n\nBÀI LÀM HỌC VIÊN:\n${input}\n\nRUBRIC NỘI BỘ:\n${JSON.stringify(hiddenRubric, null, 2)}\n\nĐÁNH GIÁ CẤU TRÚC:\n${JSON.stringify(structuredEval, null, 2)}`;
+                const feedbackPrompt = basicMode
+                    ? `${FEEDBACK_SYSTEM_PROMPT}\n\nCHẾ ĐỘ CƠ BẢN (Y2–Y3) — BẮT BUỘC:
+• CHỈ chấm chẩn đoán (không phạt phần xử trí/cận lâm sàng/nhận định khác).
+• Format bắt buộc thêm đúng 4 section dưới đây, sau section "Chẩn đoán & Lập luận lâm sàng":
+${DIFFERENTIAL_FEEDBACK_SECTION}
+
+### 🧬 Cơ chế bệnh sinh
+[Giải thích ngắn gọn, dễ hiểu cho Y2–Y3: từ nguyên nhân → quá trình bệnh lý → triệu chứng xuất hiện như thế nào. Có số liệu/cơ chế cụ thể.]
+
+### 🧭 Cách tiếp cận chẩn đoán
+[Các bước suy luận mà bác sĩ nên đi qua, từ triệu chứng chính → nhóm bệnh → chẩn đoán xác định. Nêu dữ kiện nào dẫn đến bước nào.]
+
+### 🧪 Xét nghiệm cần làm
+[Chỉ định xét nghiệm cụ thể cho ca này, mỗi xét nghiệm có mục đích rõ ràng, không liệt kê chung chung.]
+`
+                    : FEEDBACK_SYSTEM_PROMPT;
                 const feedbackData = await apiCall(
-                    [{ role: 'system', content: FEEDBACK_SYSTEM_PROMPT }, { role: 'user', content: feedbackMsg }],
+                    [{ role: 'system', content: feedbackPrompt }, { role: 'user', content: feedbackMsg }],
                     { temperature: 0.6 }
                 );
                 const feedbackText = getResponseText(feedbackData);
@@ -1809,6 +2296,7 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
 
                 initialEvaluation = feedbackText;
                 elEvalContent.innerHTML = marked.parse(feedbackText);
+                renderVerdictBadge(structuredEval?.overall);
                 elEvalResult.classList.remove('hidden');
 
                 // Show follow-up
@@ -1997,6 +2485,14 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
             elBtnShowReport.classList.add('hidden');
             followUpHistory   = [];
             followUpRemaining = 3;
+            hintsUsed      = 0;
+            answerRevealed = false;
+            similarCaseText = '';
+            updateHintUI();
+            $('tool-panel').classList.add('hidden');
+            $('tool-panel').innerHTML = '';
+            $('btn-hint').disabled    = false;
+            $('btn-similar').disabled = false;
             elDoctorInput.value = '';
             elEvalResult.classList.add('hidden');
             elFollowupSection.classList.add('hidden');
@@ -2318,6 +2814,12 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         elBtnNav.addEventListener('click', resetToWelcome);
         elBtnSubmit.addEventListener('click', submitDiagnosis);
         elBtnFollowup.addEventListener('click', submitFollowUp);
+        $('btn-hint').addEventListener('click', requestHint);
+        $('btn-similar').addEventListener('click', loadSimilarCases);
+        $('btn-reveal').addEventListener('click', revealAnswer);
+        $('btn-open-stats').addEventListener('click', openStats);
+        $('btn-close-stats').addEventListener('click', () => $('modal-stats').classList.add('hidden'));
+        $('modal-stats').addEventListener('click', e => { if (e.target === $('modal-stats')) $('modal-stats').classList.add('hidden'); });
         elFollowupInput.addEventListener('keydown', e => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitFollowUp();
         });
@@ -2815,6 +3317,7 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
         // =========================================================
         marked.setOptions({ breaks: true, gfm: true });
         renderTopics();
+        renderLearningModes();
         renderDifficulties();
 
         // Kiểm tra session đang có (tự động đăng nhập nếu còn session)
