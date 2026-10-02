@@ -808,7 +808,7 @@ CHẾ ĐỘ CƠ BẢN (Y2–Y3) — yêu cầu đặc thù, ưu tiên cao hơn m
 • Ngữ cảnh đối tượng: sinh viên Y2–Y3, đang học lâm sàng cơ bản.
 • Độ đa dạng bệnh TỐI ĐA: mỗi case phải luân chuyển qua dải "rất phổ biến → phổ biến → trung bình → hiếm → rất hiếm". Khi chọn bệnh, ưu tiên bệnh CHƯA xuất hiện gần đây. Trong trường patient có thêm trường "disease_tier": "rất phổ biến|phổ biến|trung bình|hiếm|rất hiếm".
 • Độ khó chẩn đoán: KHÔNG được giảm — triệu chứng cốt lõi phải đủ đặc hiệu để học viên suy luận (cần phân biệt 2–4 chẩn đoán), data không đầy cố tình để buộc học viên nhận ra thiếu sót.
-• Ngữ cảnh bệnh nhân: RÚT GỌN — "benh_su" 2–3 câu, "tien_su" 1 câu, "kham_lam_sang" chỉ dấu hiệu thực thể quan trọng, "can_lam_sang_co_ban" chỉ vài xét nghiệm cơ bản có sẵn.
+• Ngữ cảnh bệnh nhân: VẪN PHẢI ĐỦ DÀI và CHI TIẾT theo đúng số câu quy định trong yêu cầu độ dài (benh_su 6–10 câu, tien_su 3–5 câu, kham_lam_sang 5–8 câu). KHÔNG được rút gọn các đoạn này. Rút gọn chỉ áp dụng cho phần GIẢI THÍCH/teaching_notes và differential (mỗi mục 1–2 câu).
 • Thêm trường "teaching_notes" (string): giải thích ngắn gọn cơ chế bệnh sinh (pathophysiology) và cách tiếp cận chẩn đoán từng bước — ở mức độ Y2–Y3 có thể hiểu được.
 • Thêm trường "differential" (array of 3–5 objects) — ĐÂY LÀ TRỌNG TÂM:
   { "disease": "tên bệnh", "similar": "triệu chứng/dấu hiệu GIỐNG ca này", "ruled_out_by": "1–2 chi tiết CHỈ GẶP ở bệnh đó hoặc THIẾU ở bệnh này — tức là lý do loại trừ", "prevalence": "common|uncommon|rare" }
@@ -836,49 +836,7 @@ NHIỆM VỤ: Tạo ca lâm sàng + rubric đánh giá nội bộ. Trả về JS
     "benh_su": string,
     "tien_su": string,
     "kham_lam_sang": string,
-    "can_lam_sang_co_ban": string,
-    "can_lam_sang": [
-      {
-        "ten": string,
-        "ket_qua": string,
-        "don_vi": string,
-        "khoang_tham_chieu": string,
-        "bat_thuong": true|false,
-        "huu_ich": string
-      }
-    ],
-    "benh_su_timeline": [
-      {
-        "thoi_diem": string,
-        "dien_bien": string,
-        "muc_do": "nhẹ|vừa|nặng",
-        "quan_trong": true|false
-      }
-    ],
-    "tien_su_chi_tiet": [
-      {
-        "muc": string,
-        "chi_tiet": string,
-        "loai": "bệnh_lý|phẫu_thuật|dị ứng|thói_quen|di_truyền",
-        "lien_quan": true|false
-      }
-    ],
-    "sinh_hieu": [
-      {
-        "ten": string,
-        "ket_qua": string,
-        "don_vi": string,
-        "khoang_tham_chieu": string,
-        "bat_thuong": true|false
-      }
-    ],
-    "kham_thuc_the": [
-      {
-        "he": string,
-        "phat_hien": string,
-        "bat_thuong": true|false
-      }
-    ]
+    "can_lam_sang_co_ban": string
   },
   "rubric": {
     "clinical_context": "Ca bệnh test kỹ năng gì",
@@ -923,58 +881,94 @@ NHIỆM VỤ: Tạo ca lâm sàng + rubric đánh giá nội bộ. Trả về JS
 TUYỆT ĐỐI KHÔNG để lộ chẩn đoán trong phần "patient".
 Tự kiểm tra tính nhất quán. Set consistent=false nếu có mâu thuẫn.
 
-═══ QUY TẮC TRƯỜNG "can_lam_sang" (BẮT BUỘC) ═══
-Đây là danh sách máy — để học viên tự biết chỉ số nào BẤT THƯỜNG.
+═══ YÊU CẦU ĐỘ DÀI & CHI TIẾT (QUAN TRỌNG — ưu tiên cao) ═══
+Ca bệnh phải GIÀU CHI TIẾT như bệnh án thật, đủ để học viên luyện hỏi bệnh.
+KHÔNG được viết tắt, KHÔNG tóm tắt, KHÔNG dùng câu chung chung.
 
-• "ten": tên xét nghiệm đầy đủ, VD "WBC (bạch cầu)", "Hb (hemoglobin)", "Cr (creatinin)", "CRP", "AST", "HbA1c"
-• "ket_qua": chỉ SỐ giá trị hoặc kết quả quan trọng. VD "15,2", "12,8", "Dương tính", "Âm tính". TUYỆT ĐỐI KHÔNG viết kèm chú thích trong này
-• "don_vi": đơn vị, VD "10^9/L", "g/dL", "µmol/L", "mg/L", "U/L", "%"
-• "khoang_tham_chieu": khoảng tham chiếu của người lớn KHOẺ MẠNH. VD "4,0 – 10,0", "13,0 – 17,0", "< 5,0", "0 – 8,0", "0 – 40"
-• "bat_thuong": true nếu kết quả NẰM NGOÀI khoảng tham chiếu, false nếu trong khoảng
-• "huu_ich": 1 câu ngắn — vì sao chỉ số này quan trọng với ca bệnh này, HOẶC bệnh lý nào nó gợi ý. VD "Gợi ý nhiễm khuẩn vùng", "Theo dõi chức năng thận khi dùng kháng sinh"
+• "benh_su": 6–10 câu. Phải có: thời điểm khởi phát, cơ chế/tình huống khởi phát,
+  vị trí + tính chất + cường độ triệu chứng chính, yếu tố tăng/giảm, triệu chứng kèm theo
+  (đã hỏi và phủ định cũng phải ghi rõ), diễn tiến theo thời gian, thuốc đã dùng + đáp ứng.
+  Viết mạch lạc như bác sĩ ghi bệnh án, dùng thuật ngữ y khoa.
+• "tien_su": 3–5 câu. Bệnh nền + thời gian + thuốc đang dùng + mức độ kiểm soát;
+  tiền sử phẫu thuật; dị ứng; thói quen (thuốc lá, rượu); tiền sử gia đình nếu liên quan.
+• "kham_lam_sang": 5–8 câu. Ghi ĐẦY ĐỦ dấu hiệu sinh tồn kèm con số cụ thể
+  (nhiệt độ, mạch, huyết áp, nhịp thở, SpO₂), thể trạng chung, rồi khám từng hệ cơ quan
+  có liên quan — kể cả hệ bình thường (ghi rõ "bình thường" để học viên biết đã khám).
+• "ly_do_nhap_vien": 2–3 câu, nêu lý do + bối cảnh nhập viện.
+• "can_lam_sang_co_ban": 4–8 xét nghiệm cơ bản có sẵn, mỗi xét nghiệm ghi rõ
+  tên + giá trị + đơn vị + khoảng tham chiếu, VD "WBC 15,2 10^9/L (BT 4,0–10,0)".
+  Ghi cả chỉ số bình thường.`;
 
-Quy tắc:
-- 5–10 chỉ số, chọn đúng các xét nghiệm quan trọng nhất cho chẩn đoán phân biệt ca này
-- CẢ CHỈ SỐ BÌNH THƯỜNG cũng phải có mặt (giá trị đúng tên thường) — để học viên tập so sánh
-- Khoảng tham chiếu phải ĐÚNG với quy chuẩn Việt Nam/định chuẩn lâm sàng thông dụng. KHÔNG bịa khoảng vô lý
-- KHÔNG để lộ chẩn đoán trong "huu_ich" (viết theo kiểu "gợi ý...", "theo dõi...", không viết thẳng tên bệnh đáp án)
-• "can_lam_sang_co_ban": giữ lại như bản tóm tắt dạng text 1–2 dòng (dùng để in/đọc nhanh), không bắt buộc chi tiết
+        // ── REQUEST 2: chuyển văn bản → cấu trúc (KHÔNG sáng tạo) ──
+        const STRUCTURED_TRANSFORM_PROMPT = `Bạn là bộ chuyển đổi dữ liệu y khoa. Nhiệm vụ DUY NHẤT: chuyển các đoạn văn
+có sẵn trong hồ sơ bệnh án thành dạng cấu trúc để hiển thị bảng.
 
-═══ QUY TẮC 4 MẢNG CẤU TRÚC CÒN LẠI (BẮT BUỘC) ═══
-Mục đích: bên cạnh bản văn (benh_su / tien_su / kham_lam_sang), PHẢI xuất thêm dạng
-cấu trúc để UI render đẹp. Bản văn và bản cấu trúc phải MÔ TẢ CÙNG DỮ KIỆN
-(không được mâu thuẫn, không thêm dữ kiện mới).
+⛔ QUY TẮC TUYỆT ĐỐI — ĐỌC KỸ:
+1. KHÔNG được bịa thêm triệu chứng, số liệu, thuốc, hay dữ kiện MỚI.
+   Chỉ được TÁCH và GẮN NHÃN dữ liệu đã có trong văn bản gốc.
+2. KHÔNG được đổi nghĩa, không suy diễn, không thêm chẩn đoán.
+3. Mọi con số phải COPY NGUYÊN từ văn bản gốc.
+4. Nếu văn bản không có dữ liệu cho một mục → BỎ TRỐNG mục đó (mảng rỗng),
+   TUYỆT ĐỐI KHÔNG tự chế cho đủ số lượng.
+5. Khoảng tham chiếu dùng chuẩn người lớn thông dụng (quy chuẩn VN).
+   Chỉ điền khi đã có giá trị thật; nếu không chắc khoảng chuẩn → để chuỗi rỗng "".
 
-▸ "benh_su_timeline" (3–6 mục) — diễn tiến bệnh theo thời gian, CŨ → MỚI:
-  • "thoi_diem": mốc thời gian tương đối, VD "3 ngày trước", "Sáng nay", "2 giờ trước". KHÔNG dùng ngày tuyệt đối
-  • "dien_bien": 1 câu mô tả triệu chứng/diễn tiến tại mốc đó, có chi tiết cụ thể (vị trí, tính chất, con số)
-  • "muc_do": "nhẹ" | "vừa" | "nặng" — đánh giá mức độ tại thời điểm đó
-  • "quan_trong": true nếu đây là dữ kiện then chốt định hướng chẩn đoán, false nếu là nền
+Trả về JSON (không kèm markdown, KHÔNG trả lại phần nào khác):
 
-▸ "tien_su_chi_tiet" (2–6 mục) — tách tiền sử thành từng mục riêng:
-  • "muc": tên vấn đề ngắn gọn, VD "Đái tháo đường type 2", "Dị ứng Penicillin"
-  • "chi_tiet": thời gian/thuốc/kiểm soát, VD "5 năm, đang dùng Metformin"
-  • "loai": "bệnh_lý" | "phẫu_thuật" | "dị ứng" | "thói_quen" | "di_truyền"
-  • "lien_quan": true nếu mục này LIÊN QUAN tới ca bệnh hiện tại (yếu tố nguy cơ / chống chỉ định / gợi ý chẩn đoán), false nếu không
+{
+  "can_lam_sang": [
+    { "ten": string, "ket_qua": string, "don_vi": string,
+      "khoang_tham_chieu": string, "bat_thuong": true|false, "huu_ich": string }
+  ],
+  "benh_su_timeline": [
+    { "thoi_diem": string, "dien_bien": string,
+      "muc_do": "nhẹ|vừa|nặng", "quan_trong": true|false }
+  ],
+  "tien_su_chi_tiet": [
+    { "muc": string, "chi_tiet": string,
+      "loai": "bệnh_lý|phẫu_thuật|dị ứng|thói_quen|di_truyền", "lien_quan": true|false }
+  ],
+  "sinh_hieu": [
+    { "ten": string, "ket_qua": string, "don_vi": string,
+      "khoang_tham_chieu": string, "bat_thuong": true|false }
+  ],
+  "kham_thuc_the": [
+    { "he": string, "phat_hien": string, "bat_thuong": true|false }
+  ]
+}
 
-▸ "sinh_hieu" (4–7 mục) — dấu hiệu sinh tồn, dùng CHUNG định dạng với "can_lam_sang":
-  • Bắt buộc có đủ: Nhiệt độ, Mạch, Huyết áp, Nhịp thở, SpO₂ (nếu ca có). Thêm cân nặng/BMI/đau nếu cần
-  • "ket_qua": chỉ con số. VD "38,5", "150/95", "102"
-  • "don_vi": "°C", "lần/phút", "mmHg", "%"
-  • "khoang_tham_chieu": chuẩn người lớn. VD "36,0 – 37,2", "60 – 100", "< 130/85", "16 – 20", "95 – 100"
-  • "bat_thuong": true nếu ngoài khoảng
-  • ⚠️ Nhiệt độ/Mạch/HA/Nhịp thở trong "sinh_hieu" PHẢI KHỚP với "kham_lam_sang" và "benh_su"
+HƯỚNG DẪN TỪNG MẢNG:
 
-▸ "kham_thuc_the" (3–7 mục) — khám từng hệ cơ quan, CẢ bình thường lẫn bất thường:
-  • "he": tên hệ, VD "Tim mạch", "Hô hấp", "Bụng", "Thần kinh", "Da niêm", "Cơ xương khớp"
-  • "phat_hien": mô tả ngắn gọn dấu hiệu tìm được, kèm nghiệm pháp nếu có. VD "Ấn đau hạ sườn phải, Murphy (+)"
-  • "bat_thuong": true nếu hệ này có dấu hiệu bệnh lý, false nếu bình thường
-  • PHẢI có ít nhất 1 hệ bình thường (để học viên tập phân biệt)
+▸ "can_lam_sang" — tách từ "can_lam_sang_co_ban":
+  • "ket_qua": CHỈ con số hoặc kết quả ("15,2", "Dương tính"). Không kèm chú thích
+  • "don_vi": "10^9/L", "g/dL", "mg/L", "U/L", "%"
+  • "bat_thuong": true nếu giá trị ngoài khoảng tham chiếu
+  • "huu_ich": 1 câu ngắn vì sao chỉ số này đáng chú ý. KHÔNG nêu tên chẩn đoán
 
-QUY TẮC CHUNG CHO 4 MẢNG:
-- Dữ kiện phải NHẤT QUÁN với bản văn tương ứng và với rubric
-- KHÔNG để lộ chẩn đoán: không viết tên bệnh đáp án trong bất kỳ trường nào
-- Nếu một mục không có dữ liệu thật trong ca → bỏ mục đó, KHÔNG bịa thêm`;
+▸ "benh_su_timeline" — tách từ "benh_su", sắp CŨ → MỚI:
+  • "thoi_diem": mốc thời gian TƯƠNG ĐỐI lấy nguyên từ văn bản ("3 ngày trước", "Sáng nay")
+  • "dien_bien": 1 câu mô tả triệu chứng/diễn tiến tại mốc đó
+  • "muc_do": mức độ tại thời điểm đó
+  • "quan_trong": true nếu là dữ kiện then chốt định hướng chẩn đoán
+
+▸ "tien_su_chi_tiet" — tách từ "tien_su" thành từng mục riêng:
+  • "muc": tên vấn đề ngắn ("Đái tháo đường type 2", "Dị ứng Penicillin")
+  • "chi_tiet": thời gian/thuốc/kiểm soát lấy từ văn bản
+  • "loai": phân loại đúng bản chất mục đó
+  • "lien_quan": true nếu mục này là yếu tố nguy cơ / chống chỉ định / gợi ý cho ca hiện tại
+
+▸ "sinh_hieu" — tách các con số sinh tồn từ "kham_lam_sang" và "benh_su":
+  • Bắt buộc tách đủ những gì văn bản có: Nhiệt độ, Mạch, Huyết áp, Nhịp thở, SpO₂
+  • "khoang_tham_chieu" chuẩn: "36,0 – 37,2" | "60 – 100" | "< 130/85" | "16 – 20" | "95 – 100"
+  • ⚠️ Số trong "ket_qua" PHẢI TRÙNG KHỚP với văn bản gốc
+
+▸ "kham_thuc_the" — tách phần khám thực thể trong "kham_lam_sang" theo từng hệ:
+  • "he": "Tim mạch", "Hô hấp", "Bụng", "Thần kinh", "Da niêm", "Cơ xương khớp"...
+  • "phat_hien": mô tả ngắn gọn dấu hiệu, giữ nguyên nghiệm pháp nếu có ("Murphy (+)")
+  • "bat_thuong": true nếu hệ này có dấu hiệu bệnh lý
+  • Giữ CẢ hệ bình thường nếu văn bản có ghi
+
+Nhắc lại: thà thiếu mục còn hơn bịa thêm. Chỉ dùng dữ liệu có thật trong văn bản.`;
 
         const EVAL_SYSTEM_PROMPT = `Bạn là clinical evaluation engine — đánh giá cấu trúc khắt khe, không khoan nhượng với sự mơ hồ và thiếu cụ thể.
 
@@ -2345,6 +2339,7 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                     parsed.patient.tien_su_chi_tiet = clean(parsed.patient.tien_su_chi_tiet, ['muc']);
                     parsed.patient.sinh_hieu        = clean(parsed.patient.sinh_hieu,        ['ten', 'ket_qua']);
                     parsed.patient.kham_thuc_the    = clean(parsed.patient.kham_thuc_the,    ['he', 'phat_hien']);
+
                     if (parsed.validation?.consistent === false && attempt < 2) {
                         console.warn(`Attempt ${attempt+1} failed validation:`, parsed.validation.issues);
                         await new Promise(r => setTimeout(r, 800)); continue;
@@ -2352,6 +2347,36 @@ Yêu cầu: dữ liệu bệnh nhân chi tiết, dấu hiệu sinh tồn có s�
                     currentCaseData = parsed.patient;
                     hiddenRubric    = parsed.rubric;
                     success = true;
+
+                    // ── REQUEST 2: chuyển văn bản → cấu trúc (không sáng tạo) ──
+                    // Fail ở bước này KHÔNG làm hỏng ca bệnh — chỉ thiếu bảng đẹp.
+                    $('start-text').innerHTML = '<i class="fas fa-wand-magic-sparkles mr-1"></i> Đang trình bày...';
+                    try {
+                        const txData = await apiCall(
+                            [{ role: 'system', content: STRUCTURED_TRANSFORM_PROMPT },
+                             { role: 'user', content: `HỒ SƠ BỆNH ÁN (JSON):\n${JSON.stringify(parsed.patient, null, 2)}` }],
+                            { temperature: 0.2, response_format: { type: 'json_object' } }
+                        );
+                        const txRaw = getResponseText(txData);
+                        if (!txRaw) throw new Error('Phản hồi cấu trúc rỗng');
+                        const tx = JSON.parse(txRaw);
+                        const cleanTx = (arr, keys) => Array.isArray(arr)
+                            ? arr.filter(r => r && keys.every(k => r[k] != null && String(r[k]).trim() !== ''))
+                            : [];
+                        currentCaseData.can_lam_sang    = cleanTx(tx.can_lam_sang,    ['ten', 'ket_qua']);
+                        currentCaseData.benh_su_timeline = cleanTx(tx.benh_su_timeline, ['thoi_diem', 'dien_bien']);
+                        currentCaseData.tien_su_chi_tiet = cleanTx(tx.tien_su_chi_tiet, ['muc']);
+                        currentCaseData.sinh_hieu        = cleanTx(tx.sinh_hieu,        ['ten', 'ket_qua']);
+                        currentCaseData.kham_thuc_the    = cleanTx(tx.kham_thuc_the,    ['he', 'phat_hien']);
+                    } catch (e2) {
+                        console.warn('Structured transform failed (fallback sang văn bản):', e2);
+                        currentCaseData.can_lam_sang     = currentCaseData.can_lam_sang     || [];
+                        currentCaseData.benh_su_timeline = currentCaseData.benh_su_timeline || [];
+                        currentCaseData.tien_su_chi_tiet = currentCaseData.tien_su_chi_tiet || [];
+                        currentCaseData.sinh_hieu        = currentCaseData.sinh_hieu        || [];
+                        currentCaseData.kham_thuc_the    = currentCaseData.kham_thuc_the    || [];
+                    }
+
                     renderPatientCase();
                 } catch (e) {
                     lastErrMsg = e.message;
